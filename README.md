@@ -1,12 +1,16 @@
 # my-shop-app
 
-Next.js + PostgreSQL shop management app for products, inventory, purchases, sales, adjustments, and expenses.
+Next.js + PostgreSQL shop management app for Indian shops to track products, inventory, purchases, sales, adjustments, and expenses.
 
 ## Stack
 
 - Next.js App Router
 - PostgreSQL via pg
 - Responsive custom UI
+- INR currency and Indian date formatting
+- GST % and HSN/SAC support in product catalog
+- GST-ready invoice register with CGST/SGST/IGST split
+- Old invoice digitization by pasting invoice lines
 
 ## Run locally
 
@@ -34,3 +38,9 @@ Open http://localhost:3000.
 
 - Tables are auto-created on first API call.
 - Seed products are inserted when the products table is empty.
+- Product records include `gst_rate` and `hsn_code` for GST-ready entries.
+- Old bills can be digitized from the `Invoices` tab with line format:
+
+```text
+item_name,quantity,rate,gst_percent,hsn_code(optional)
+```

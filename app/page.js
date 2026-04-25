@@ -2,13 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-const currency = new Intl.NumberFormat('en-US', {
+const currency = new Intl.NumberFormat('en-IN', {
   style: 'currency',
-  currency: 'USD',
+  currency: 'INR',
   maximumFractionDigits: 2,
 });
 
-const dateFormatter = new Intl.DateTimeFormat('en-US', {
+const dateFormatter = new Intl.DateTimeFormat('en-IN', {
   month: 'short',
   day: 'numeric',
   year: 'numeric',
@@ -20,9 +20,16 @@ const initialState = {
   sales: [],
   adjustments: [],
   expenses: [],
+  invoices: [],
 };
 
-const navItems = ['overview', 'products', 'inventory', 'purchases', 'sales', 'adjustments', 'expenses'];
+const navItems = ['overview', 'products', 'inventory', 'purchases', 'sales', 'invoices', 'adjustments', 'expenses'];
+
+const indianStates = [
+  'AN', 'AP', 'AR', 'AS', 'BR', 'CG', 'CH', 'DD', 'DL', 'DN', 'GA', 'GJ', 'HP', 'HR',
+  'JH', 'JK', 'KA', 'KL', 'LA', 'LD', 'MH', 'ML', 'MN', 'MP', 'MZ', 'NL', 'OD', 'PB',
+  'PY', 'RJ', 'SK', 'TN', 'TR', 'TS', 'UK', 'UP', 'WB',
+];
 
 export default function Page() {
   const [state, setState] = useState(initialState);
@@ -120,6 +127,8 @@ export default function Page() {
       sku: String(fd.get('sku')).trim(),
       cost: Number(fd.get('cost')),
       price: Number(fd.get('price')),
+      gstRate: Number(fd.get('gstRate')),
+      hsnCode: String(fd.get('hsnCode') || '').trim(),
       stock: Number(fd.get('stock')),
       minStock: Number(fd.get('minStock')),
       supplier: String(fd.get('supplier') || '').trim(),
@@ -177,6 +186,25 @@ export default function Page() {
     event.currentTarget.reset();
   }
 
+  async function submitInvoice(event) {
+    event.preventDefault();
+    const fd = new FormData(event.currentTarget);
+    await post('/api/invoices', {
+      invoiceNumber: String(fd.get('invoiceNumber')).trim(),
+      invoiceDate: fd.get('invoiceDate') ? new Date(String(fd.get('invoiceDate'))).toISOString() : new Date().toISOString(),
+      customerName: String(fd.get('customerName') || '').trim(),
+      customerPhone: String(fd.get('customerPhone') || '').trim(),
+      customerGstin: String(fd.get('customerGstin') || '').trim(),
+      paymentMode: String(fd.get('paymentMode') || '').trim(),
+      placeOfSupplyCode: String(fd.get('placeOfSupplyCode') || 'MH').trim().toUpperCase(),
+      notes: String(fd.get('notes') || '').trim(),
+      linesText: String(fd.get('linesText') || '').trim(),
+      source: 'digitized',
+      affectStock: fd.get('affectStock') === 'on',
+    });
+    event.currentTarget.reset();
+  }
+
   const salesCount = state.sales.length;
   const purchaseCount = state.purchases.length;
   const productCount = state.products.length;
@@ -189,7 +217,7 @@ export default function Page() {
           <div className="brand-mark">M</div>
           <div>
             <p className="eyebrow">Shop management</p>
-            <h1>My Shop App</h1>
+            <h1>Bharat Shop App</h1>
           </div>
         </div>
         <nav className="nav">
@@ -202,7 +230,7 @@ export default function Page() {
         <section className="sidebar-card">
           <p className="eyebrow">Today</p>
           <div className="sidebar-date">{dateFormatter.format(new Date())}</div>
-          <p className="sidebar-copy">Track inventory, purchases, sales and expenses from one dashboard.</p>
+          <p className="sidebar-copy">Track kirana stock, purchases, sales and expenses from one dashboard.</p>
           {loading ? <p className="sidebar-copy">Loading...</p> : null}
           {error ? <p className="error-text">{error}</p> : null}
         </section>
@@ -212,8 +240,8 @@ export default function Page() {
         <header className="hero">
           <div>
             <p className="eyebrow">Next.js + PostgreSQL</p>
-            <h2>Shop operations with proper backend.</h2>
-            <p className="hero-copy">Fast UI with App Router and API routes. All transactions persist in PostgreSQL.</p>
+            <h2>Built for Indian shops and kirana workflows.</h2>
+            <p className="hero-copy">Fast UI with App Router and API routes, localized in INR with GST and HSN-ready product entries.</p>
           </div>
         </header>
 
@@ -263,8 +291,12 @@ export default function Page() {
                   <label>Category<input name="category" required /></label>
                   <label>SKU<input name="sku" required /></label>
                   <div className="split-fields">
-                    <label>Cost price<input name="cost" type="number" step="0.01" min="0" required /></label>
-                    <label>Sale price<input name="price" type="number" step="0.01" min="0" required /></label>
+                    <label>Purchase price (₹)<input name="cost" type="number" step="0.01" min="0" required /></label>
+                    <label>Selling price (₹)<input name="price" type="number" step="0.01" min="0" required /></label>
+                  </div>
+                  <div className="split-fields">
+                    <label>GST %<input name="gstRate" type="number" step="0.01" min="0" max="28" defaultValue="0" required /></label>
+                    <label>HSN/SAC code<input name="hsnCode" placeholder="e.g. 1006" /></label>
                   </div>
                   <div className="split-fields">
                     <label>Opening stock<input name="stock" type="number" step="1" min="0" required /></label>
@@ -280,10 +312,10 @@ export default function Page() {
                   </div>
                   <div className="table-wrap">
                     <table>
-                      <thead><tr><th>Product</th><th>Category</th><th>SKU</th><th>Stock</th><th>Pricing</th></tr></thead>
+                      <thead><tr><th>Product</th><th>Category</th><th>SKU</th><th>HSN</th><th>Stock</th><th>Pricing</th></tr></thead>
                       <tbody>
                         {filteredProducts.map((p) => (
-                          <tr key={p.id}><td>{p.name}</td><td>{p.category}</td><td>{p.sku}</td><td>{p.stock}</td><td>{currency.format(p.cost)} / {currency.format(p.price)}</td></tr>
+                          <tr key={p.id}><td>{p.name}</td><td>{p.category}</td><td>{p.sku}</td><td>{p.hsnCode || '-'}</td><td>{p.stock}</td><td>{currency.format(p.cost)} / {currency.format(p.price)} ({p.gstRate}% GST)</td></tr>
                         ))}
                       </tbody>
                     </table>
@@ -341,11 +373,76 @@ export default function Page() {
                     <label>Quantity<input name="quantity" type="number" min="1" required /></label>
                     <label>Sale price<input name="price" type="number" step="0.01" min="0" required /></label>
                   </div>
-                  <label>Channel<input name="channel" /></label>
+                  <label>Channel<input name="channel" placeholder="UPI / Cash / Card" /></label>
                   <label>Notes<textarea name="notes" rows="3" /></label>
                   <button className="primary-button" type="submit">Add sale</button>
                 </form>
                 <div className="table-card"><div className="table-wrap"><table><thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Revenue</th></tr></thead><tbody>{state.sales.map((x) => <tr key={x.id}><td>{dateFormatter.format(new Date(x.date))}</td><td>{state.products.find((p) => p.id === x.productId)?.name || 'Unknown'}</td><td>{x.quantity}</td><td>{currency.format(x.quantity * x.price)}</td></tr>)}</tbody></table></div></div>
+              </div>
+            ) : null}
+
+            {activeView === 'invoices' ? (
+              <div className="panel-subgrid">
+                <form className="form-card" onSubmit={submitInvoice}>
+                  <h4>Digitize old invoice</h4>
+                  <div className="split-fields">
+                    <label>Invoice number<input name="invoiceNumber" placeholder="e.g. 24-25/0191" required /></label>
+                    <label>Invoice date<input name="invoiceDate" type="date" required /></label>
+                  </div>
+                  <div className="split-fields">
+                    <label>Customer name<input name="customerName" placeholder="Optional" /></label>
+                    <label>Customer phone<input name="customerPhone" placeholder="Optional" /></label>
+                  </div>
+                  <div className="split-fields">
+                    <label>Customer GSTIN<input name="customerGstin" placeholder="Optional" /></label>
+                    <label>Payment mode<input name="paymentMode" placeholder="UPI / Cash / Card" /></label>
+                  </div>
+                  <label>Place of supply state code
+                    <select name="placeOfSupplyCode" defaultValue="MH">
+                      {indianStates.map((code) => <option key={code} value={code}>{code}</option>)}
+                    </select>
+                  </label>
+                  <label>Item lines (one per line)
+                    <textarea
+                      name="linesText"
+                      rows="7"
+                      required
+                      placeholder={[
+                        'Basmati Rice 5kg,2,520,5,1006',
+                        'Detergent Powder 1kg,1,92,18,3402',
+                        'Format: item,qty,rate,gst%,hsn(optional)'
+                      ].join('\n')}
+                    />
+                  </label>
+                  <label>Notes<textarea name="notes" rows="2" placeholder="Legacy bill details / remarks" /></label>
+                  <label className="checkbox-line"><input name="affectStock" type="checkbox" />Also reduce stock for this imported invoice</label>
+                  <button className="primary-button" type="submit">Digitize invoice</button>
+                </form>
+                <div className="table-card">
+                  <div className="table-header">
+                    <h4>Invoice register (GST-ready)</h4>
+                  </div>
+                  <div className="table-wrap">
+                    <table>
+                      <thead><tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Tax split</th><th>Total</th></tr></thead>
+                      <tbody>
+                        {state.invoices.map((x) => (
+                          <tr key={x.id}>
+                            <td>{dateFormatter.format(new Date(x.invoiceDate))}</td>
+                            <td>{x.invoiceNumber}<br />{x.placeOfSupplyCode}{x.isInterstate ? ' (IGST)' : ' (CGST+SGST)'}</td>
+                            <td>{x.customerName || '-'}<br />{x.customerGstin || '-'}</td>
+                            <td>
+                              {x.isInterstate
+                                ? `IGST ${currency.format(x.igstAmount)}`
+                                : `CGST ${currency.format(x.cgstAmount)} + SGST ${currency.format(x.sgstAmount)}`}
+                            </td>
+                            <td>{currency.format(x.totalAmount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             ) : null}
 
@@ -369,7 +466,7 @@ export default function Page() {
               <div className="panel-subgrid">
                 <form className="form-card" onSubmit={submitExpense}>
                   <h4>Record expense</h4>
-                  <label>Label<input name="label" required /></label>
+                  <label>Label<input name="label" placeholder="Rent, electricity, staff" required /></label>
                   <div className="split-fields">
                     <label>Category<input name="category" required /></label>
                     <label>Amount<input name="amount" type="number" step="0.01" min="0" required /></label>

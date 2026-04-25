@@ -11,8 +11,8 @@ export async function POST(request) {
 
     const db = getDb();
     const result = await db.query(
-      `insert into products (id, name, category, sku, cost, price, stock, min_stock, supplier)
-       values (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8)
+      `insert into products (id, name, category, sku, cost, price, gst_rate, hsn_code, stock, min_stock, supplier)
+       values (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        returning *`,
       [
         payload.name,
@@ -20,6 +20,8 @@ export async function POST(request) {
         payload.sku,
         payload.cost ?? 0,
         payload.price ?? 0,
+        payload.gstRate ?? 0,
+        payload.hsnCode ?? '',
         payload.stock ?? 0,
         payload.minStock ?? 0,
         payload.supplier ?? '',

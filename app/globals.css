@@ -58,6 +58,8 @@ h1, h2, h3, h4 { margin: 0; font-family: 'Space Grotesk', sans-serif; }
 .panel-subgrid { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 16px; }
 .form-card { display: grid; gap: 12px; padding: 18px; }
 .form-card label { display: grid; gap: 8px; font-size: 0.92rem; color: var(--muted); }
+.checkbox-line { display: flex !important; gap: 10px; align-items: center; color: var(--text) !important; }
+.checkbox-line input { width: auto; accent-color: #38bdf8; }
 .split-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .table-card { min-width: 0; padding: 18px; }
 .table-wrap { overflow: auto; }
