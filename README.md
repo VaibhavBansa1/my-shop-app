@@ -11,6 +11,7 @@ Next.js + PostgreSQL shop management app for Indian shops to track products, inv
 - GST % and HSN/SAC support in product catalog
 - GST-ready invoice register with CGST/SGST/IGST split
 - Old invoice digitization by pasting invoice lines
+- OCR-assisted old invoice import from image or PDF files
 
 ## Run locally
 
@@ -40,6 +41,8 @@ Open http://localhost:3000.
 - Seed products are inserted when the products table is empty.
 - Product records include `gst_rate` and `hsn_code` for GST-ready entries.
 - Old bills can be digitized from the `Invoices` tab with line format:
+- You can upload a scanned bill image or PDF in `Invoices` tab; detected rows are auto-filled and can be edited before saving.
+- Old bills can also be digitized manually with line format:
 
 ```text
 item_name,quantity,rate,gst_percent,hsn_code(optional)

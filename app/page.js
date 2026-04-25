@@ -31,6 +31,46 @@ const indianStates = [
   'PY', 'RJ', 'SK', 'TN', 'TR', 'TS', 'UK', 'UP', 'WB',
 ];
 
+const ocrNoiseTokens = ['invoice', 'bill', 'gstin', 'cgst', 'sgst', 'igst', 'subtotal', 'total', 'amount', 'tax', 'date'];
+
+function parseDigitizedLinesFromRawText(rawText) {
+  const candidates = String(rawText || '')
+    .split('\n')
+    .map((line) => line.replace(/₹/g, ' ').replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+
+  const output = [];
+
+  for (const line of candidates) {
+    const lower = line.toLowerCase();
+    if (ocrNoiseTokens.some((token) => lower.includes(token))) continue;
+
+    const firstNumberMatch = line.match(/\d/);
+    if (!firstNumberMatch || firstNumberMatch.index === undefined) continue;
+
+    const numericMatches = [...line.matchAll(/\d+(?:\.\d+)?/g)];
+    if (numericMatches.length < 2) continue;
+
+    const name = line.slice(0, firstNumberMatch.index).replace(/[|:\-]+$/g, '').trim();
+    if (!name || name.length < 2) continue;
+
+    const qty = Number(numericMatches[0][0]);
+    const rate = Number(numericMatches[1][0]);
+
+    if (!Number.isInteger(qty) || qty <= 0) continue;
+    if (!Number.isFinite(rate) || rate < 0) continue;
+
+    const extraNumbers = numericMatches.slice(2).map((m) => Number(m[0]));
+    const gstRate = extraNumbers.find((n) => Number.isFinite(n) && n >= 0 && n <= 28) ?? 0;
+    const hsnCandidate = [...line.matchAll(/\b\d{4,8}\b/g)].map((m) => m[0]).find((x) => x !== String(qty));
+
+    output.push(`${name},${qty},${rate},${gstRate},${hsnCandidate || ''}`);
+  }
+
+  const unique = [...new Set(output)];
+  return unique.join('\n');
+}
+
 export default function Page() {
   const [state, setState] = useState(initialState);
   const [activeView, setActiveView] = useState('overview');
@@ -38,6 +78,9 @@ export default function Page() {
   const [error, setError] = useState('');
   const [productFilter, setProductFilter] = useState('');
   const [stockFilter, setStockFilter] = useState('all');
+  const [invoiceLines, setInvoiceLines] = useState('');
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrMessage, setOcrMessage] = useState('');
 
   useEffect(() => {
     fetchBootstrap();
@@ -198,11 +241,64 @@ export default function Page() {
       paymentMode: String(fd.get('paymentMode') || '').trim(),
       placeOfSupplyCode: String(fd.get('placeOfSupplyCode') || 'MH').trim().toUpperCase(),
       notes: String(fd.get('notes') || '').trim(),
-      linesText: String(fd.get('linesText') || '').trim(),
+      linesText: invoiceLines.trim(),
       source: 'digitized',
       affectStock: fd.get('affectStock') === 'on',
     });
     event.currentTarget.reset();
+    setInvoiceLines('');
+    setOcrMessage('');
+  }
+
+  async function extractTextFromPdf(file) {
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url).toString();
+
+    const data = new Uint8Array(await file.arrayBuffer());
+    const pdf = await pdfjs.getDocument({ data }).promise;
+    let text = '';
+
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      const page = await pdf.getPage(pageNumber);
+      const content = await page.getTextContent();
+      text += content.items.map((item) => item.str).join(' ') + '\n';
+    }
+
+    return text;
+  }
+
+  async function onInvoiceFileSelected(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setOcrLoading(true);
+      setOcrMessage('Reading invoice file...');
+
+      let rawText = '';
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        rawText = await extractTextFromPdf(file);
+      } else {
+        const Tesseract = await import('tesseract.js');
+        const result = await Tesseract.recognize(file, 'eng');
+        rawText = result?.data?.text || '';
+      }
+
+      const parsed = parseDigitizedLinesFromRawText(rawText);
+      if (!parsed) {
+        setOcrMessage('Could not detect line items automatically. Please paste lines manually.');
+        return;
+      }
+
+      setInvoiceLines((prev) => (prev.trim() ? `${prev}\n${parsed}` : parsed));
+      const count = parsed.split('\n').filter(Boolean).length;
+      setOcrMessage(`Imported ${count} item line${count > 1 ? 's' : ''}. Review and submit.`);
+    } catch (ocrError) {
+      setOcrMessage('Failed to read file. Try a clearer image or enter lines manually.');
+    } finally {
+      setOcrLoading(false);
+      event.target.value = '';
+    }
   }
 
   const salesCount = state.sales.length;
@@ -403,10 +499,23 @@ export default function Page() {
                     </select>
                   </label>
                   <label>Item lines (one per line)
+                    <div className="upload-stack">
+                      <input
+                        type="file"
+                        accept="image/*,.pdf,application/pdf"
+                        onChange={onInvoiceFileSelected}
+                      />
+                      <div className="upload-help">
+                        {ocrLoading ? 'Processing file for OCR...' : 'Upload old invoice image/PDF to auto-fill lines'}
+                      </div>
+                      {ocrMessage ? <div className="upload-help">{ocrMessage}</div> : null}
+                    </div>
                     <textarea
                       name="linesText"
                       rows="7"
                       required
+                      value={invoiceLines}
+                      onChange={(e) => setInvoiceLines(e.target.value)}
                       placeholder={[
                         'Basmati Rice 5kg,2,520,5,1006',
                         'Detergent Powder 1kg,1,92,18,3402',
