@@ -84,6 +84,15 @@ export default function Page() {
   const [ocrMessage, setOcrMessage] = useState('');
   const [menuInvoiceId, setMenuInvoiceId] = useState('');
   const [editingInvoiceId, setEditingInvoiceId] = useState('');
+  const [menuProductId, setMenuProductId] = useState('');
+  const [menuSaleId, setMenuSaleId] = useState('');
+  const [menuExpenseId, setMenuExpenseId] = useState('');
+  const [editingProductId, setEditingProductId] = useState('');
+  const [editingSaleId, setEditingSaleId] = useState('');
+  const [editingExpenseId, setEditingExpenseId] = useState('');
+  const productFormRef = useRef(null);
+  const saleFormRef = useRef(null);
+  const expenseFormRef = useRef(null);
   const invoiceFormRef = useRef(null);
 
   useEffect(() => {
@@ -181,7 +190,7 @@ export default function Page() {
   async function submitProduct(event) {
     event.preventDefault();
     const fd = new FormData(event.currentTarget);
-    await post('/api/products', {
+    const payload = {
       name: String(fd.get('name')).trim(),
       category: String(fd.get('category')).trim(),
       sku: String(fd.get('sku')).trim(),
@@ -192,8 +201,18 @@ export default function Page() {
       stock: Number(fd.get('stock')),
       minStock: Number(fd.get('minStock')),
       supplier: String(fd.get('supplier') || '').trim(),
-    });
+    };
+
+    if (editingProductId) {
+      await requestJson(`/api/products?productId=${editingProductId}`, payload, 'PATCH');
+      await fetchBootstrap();
+    } else {
+      await post('/api/products', payload);
+    }
+
     event.currentTarget.reset();
+    setEditingProductId('');
+    setMenuProductId('');
   }
 
   async function submitPurchase(event) {
@@ -212,14 +231,24 @@ export default function Page() {
   async function submitSale(event) {
     event.preventDefault();
     const fd = new FormData(event.currentTarget);
-    await post('/api/sales', {
+    const payload = {
       productId: fd.get('productId'),
       quantity: Number(fd.get('quantity')),
       price: Number(fd.get('price')),
       channel: String(fd.get('channel') || '').trim(),
       notes: String(fd.get('notes') || '').trim(),
-    });
+    };
+
+    if (editingSaleId) {
+      await requestJson(`/api/sales?saleId=${editingSaleId}`, payload, 'PATCH');
+      await fetchBootstrap();
+    } else {
+      await post('/api/sales', payload);
+    }
+
     event.currentTarget.reset();
+    setEditingSaleId('');
+    setMenuSaleId('');
   }
 
   async function submitAdjustment(event) {
@@ -237,13 +266,177 @@ export default function Page() {
   async function submitExpense(event) {
     event.preventDefault();
     const fd = new FormData(event.currentTarget);
-    await post('/api/expenses', {
+    const payload = {
       label: String(fd.get('label')).trim(),
       category: String(fd.get('category')).trim(),
       amount: Number(fd.get('amount')),
       notes: String(fd.get('notes') || '').trim(),
-    });
+    };
+
+    if (editingExpenseId) {
+      await requestJson(`/api/expenses?expenseId=${editingExpenseId}`, payload, 'PATCH');
+      await fetchBootstrap();
+    } else {
+      await post('/api/expenses', payload);
+    }
+
     event.currentTarget.reset();
+    setEditingExpenseId('');
+    setMenuExpenseId('');
+  }
+
+  function startProductEdit(product) {
+    const form = productFormRef.current;
+    if (!form) return;
+    form.name.value = product.name;
+    form.category.value = product.category;
+    form.sku.value = product.sku;
+    form.cost.value = product.cost;
+    form.price.value = product.price;
+    form.gstRate.value = product.gstRate;
+    form.hsnCode.value = product.hsnCode || '';
+    form.stock.value = product.stock;
+    form.minStock.value = product.minStock;
+    form.supplier.value = product.supplier || '';
+    setEditingProductId(product.id);
+    setMenuProductId('');
+  }
+
+  function duplicateProduct(product) {
+    const form = productFormRef.current;
+    if (!form) return;
+    form.name.value = product.name;
+    form.category.value = product.category;
+    form.sku.value = `${product.sku}-COPY`;
+    form.cost.value = product.cost;
+    form.price.value = product.price;
+    form.gstRate.value = product.gstRate;
+    form.hsnCode.value = product.hsnCode || '';
+    form.stock.value = product.stock;
+    form.minStock.value = product.minStock;
+    form.supplier.value = product.supplier || '';
+    setEditingProductId('');
+    setMenuProductId('');
+  }
+
+  async function deleteProduct(product) {
+    const confirmed = window.confirm(`Delete product ${product.name}?`);
+    if (!confirmed) return;
+    await requestJson(`/api/products?productId=${product.id}`, undefined, 'DELETE');
+    await fetchBootstrap();
+    setMenuProductId('');
+    if (editingProductId === product.id && productFormRef.current) {
+      setEditingProductId('');
+      productFormRef.current.reset();
+    }
+  }
+
+  function startSaleEdit(sale) {
+    const form = saleFormRef.current;
+    if (!form) return;
+    form.productId.value = sale.productId;
+    form.quantity.value = sale.quantity;
+    form.price.value = sale.price;
+    form.channel.value = sale.channel || '';
+    form.notes.value = sale.notes || '';
+    setEditingSaleId(sale.id);
+    setMenuSaleId('');
+  }
+
+  function duplicateSale(sale) {
+    const form = saleFormRef.current;
+    if (!form) return;
+    form.productId.value = sale.productId;
+    form.quantity.value = sale.quantity;
+    form.price.value = sale.price;
+    form.channel.value = sale.channel || '';
+    form.notes.value = sale.notes || '';
+    setEditingSaleId('');
+    setMenuSaleId('');
+  }
+
+  async function deleteSale(sale) {
+    const confirmed = window.confirm('Delete this sale entry?');
+    if (!confirmed) return;
+    await requestJson(`/api/sales?saleId=${sale.id}`, undefined, 'DELETE');
+    await fetchBootstrap();
+    setMenuSaleId('');
+    if (editingSaleId === sale.id && saleFormRef.current) {
+      setEditingSaleId('');
+      saleFormRef.current.reset();
+    }
+  }
+
+  function printSale(sale) {
+    const productName = state.products.find((p) => p.id === sale.productId)?.name || 'Unknown';
+    const win = window.open('', '_blank', 'width=700,height=550');
+    if (!win) return;
+    win.document.write(`
+      <html><head><title>Sale ${sale.id}</title></head><body style="font-family:Arial;padding:24px;">
+      <h2>Sale Receipt</h2>
+      <p>Date: ${dateFormatter.format(new Date(sale.date))}</p>
+      <p>Product: ${productName}</p>
+      <p>Quantity: ${sale.quantity}</p>
+      <p>Unit Price: ${currency.format(sale.price)}</p>
+      <p>Total: ${currency.format(sale.quantity * sale.price)}</p>
+      <p>Channel: ${sale.channel || '-'}</p>
+      </body></html>
+    `);
+    win.document.close();
+    win.focus();
+    win.print();
+  }
+
+  function startExpenseEdit(expense) {
+    const form = expenseFormRef.current;
+    if (!form) return;
+    form.label.value = expense.label;
+    form.category.value = expense.category;
+    form.amount.value = expense.amount;
+    form.notes.value = expense.notes || '';
+    setEditingExpenseId(expense.id);
+    setMenuExpenseId('');
+  }
+
+  function duplicateExpense(expense) {
+    const form = expenseFormRef.current;
+    if (!form) return;
+    form.label.value = `${expense.label} (copy)`;
+    form.category.value = expense.category;
+    form.amount.value = expense.amount;
+    form.notes.value = expense.notes || '';
+    setEditingExpenseId('');
+    setMenuExpenseId('');
+  }
+
+  async function deleteExpense(expense) {
+    const confirmed = window.confirm(`Delete expense ${expense.label}?`);
+    if (!confirmed) return;
+    await requestJson(`/api/expenses?expenseId=${expense.id}`, undefined, 'DELETE');
+    await fetchBootstrap();
+    setMenuExpenseId('');
+    if (editingExpenseId === expense.id && expenseFormRef.current) {
+      setEditingExpenseId('');
+      expenseFormRef.current.reset();
+    }
+  }
+
+  function printExpense(expense) {
+    const win = window.open('', '_blank', 'width=700,height=550');
+    if (!win) return;
+    win.document.write(`
+      <html><head><title>Expense ${expense.id}</title></head><body style="font-family:Arial;padding:24px;">
+      <h2>Expense Voucher</h2>
+      <p>Date: ${dateFormatter.format(new Date(expense.date))}</p>
+      <p>Label: ${expense.label}</p>
+      <p>Category: ${expense.category}</p>
+      <p>Amount: ${currency.format(expense.amount)}</p>
+      <p>Notes: ${expense.notes || '-'}</p>
+      </body></html>
+    `);
+    win.document.close();
+    win.focus();
+    win.print();
   }
 
   async function submitInvoice(event) {
@@ -503,8 +696,9 @@ export default function Page() {
 
             {activeView === 'products' ? (
               <div className="panel-subgrid">
-                <form className="form-card" onSubmit={submitProduct}>
+                <form className="form-card" onSubmit={submitProduct} ref={productFormRef}>
                   <h4>Add product</h4>
+                  {editingProductId ? <div className="form-note">Editing existing product</div> : null}
                   <label>Product name<input name="name" required /></label>
                   <label>Category<input name="category" required /></label>
                   <label>SKU<input name="sku" required /></label>
@@ -521,7 +715,21 @@ export default function Page() {
                     <label>Reorder level<input name="minStock" type="number" step="1" min="0" required /></label>
                   </div>
                   <label>Supplier<input name="supplier" /></label>
-                  <button className="primary-button" type="submit">Save product</button>
+                  <div className="split-fields">
+                    <button className="primary-button" type="submit">{editingProductId ? 'Update product' : 'Save product'}</button>
+                    {editingProductId ? (
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={() => {
+                          setEditingProductId('');
+                          if (productFormRef.current) productFormRef.current.reset();
+                        }}
+                      >
+                        Cancel edit
+                      </button>
+                    ) : null}
+                  </div>
                 </form>
                 <div className="table-card">
                   <div className="table-header">
@@ -530,10 +738,29 @@ export default function Page() {
                   </div>
                   <div className="table-wrap">
                     <table>
-                      <thead><tr><th>Product</th><th>Category</th><th>SKU</th><th>HSN</th><th>Stock</th><th>Pricing</th></tr></thead>
+                      <thead><tr><th>Product</th><th>Category</th><th>SKU</th><th>HSN</th><th>Stock</th><th>Pricing</th><th>More</th></tr></thead>
                       <tbody>
                         {filteredProducts.map((p) => (
-                          <tr key={p.id}><td>{p.name}</td><td>{p.category}</td><td>{p.sku}</td><td>{p.hsnCode || '-'}</td><td>{p.stock}</td><td>{currency.format(p.cost)} / {currency.format(p.price)} ({p.gstRate}% GST)</td></tr>
+                          <tr key={p.id}>
+                            <td>{p.name}</td>
+                            <td>{p.category}</td>
+                            <td>{p.sku}</td>
+                            <td>{p.hsnCode || '-'}</td>
+                            <td>{p.stock}</td>
+                            <td>{currency.format(p.cost)} / {currency.format(p.price)} ({p.gstRate}% GST)</td>
+                            <td>
+                              <div className="menu-wrap">
+                                <button className="menu-trigger" onClick={() => setMenuProductId(menuProductId === p.id ? '' : p.id)} type="button">⋮</button>
+                                {menuProductId === p.id ? (
+                                  <div className="menu-card">
+                                    <button type="button" onClick={() => startProductEdit(p)}>Edit</button>
+                                    <button type="button" onClick={() => duplicateProduct(p)}>Duplicate</button>
+                                    <button type="button" onClick={() => deleteProduct(p)}>Delete</button>
+                                  </div>
+                                ) : null}
+                              </div>
+                            </td>
+                          </tr>
                         ))}
                       </tbody>
                     </table>
@@ -584,8 +811,9 @@ export default function Page() {
 
             {activeView === 'sales' ? (
               <div className="panel-subgrid">
-                <form className="form-card" onSubmit={submitSale}>
+                <form className="form-card" onSubmit={submitSale} ref={saleFormRef}>
                   <h4>Record sale</h4>
+                  {editingSaleId ? <div className="form-note">Editing existing sale</div> : null}
                   <label>Product<select name="productId" required>{productOptions}</select></label>
                   <div className="split-fields">
                     <label>Quantity<input name="quantity" type="number" min="1" required /></label>
@@ -593,9 +821,23 @@ export default function Page() {
                   </div>
                   <label>Channel<input name="channel" placeholder="UPI / Cash / Card" /></label>
                   <label>Notes<textarea name="notes" rows="3" /></label>
-                  <button className="primary-button" type="submit">Add sale</button>
+                  <div className="split-fields">
+                    <button className="primary-button" type="submit">{editingSaleId ? 'Update sale' : 'Add sale'}</button>
+                    {editingSaleId ? (
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={() => {
+                          setEditingSaleId('');
+                          if (saleFormRef.current) saleFormRef.current.reset();
+                        }}
+                      >
+                        Cancel edit
+                      </button>
+                    ) : null}
+                  </div>
                 </form>
-                <div className="table-card"><div className="table-wrap"><table><thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Revenue</th></tr></thead><tbody>{state.sales.map((x) => <tr key={x.id}><td>{dateFormatter.format(new Date(x.date))}</td><td>{state.products.find((p) => p.id === x.productId)?.name || 'Unknown'}</td><td>{x.quantity}</td><td>{currency.format(x.quantity * x.price)}</td></tr>)}</tbody></table></div></div>
+                <div className="table-card"><div className="table-wrap"><table><thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Revenue</th><th>More</th></tr></thead><tbody>{state.sales.map((x) => <tr key={x.id}><td>{dateFormatter.format(new Date(x.date))}</td><td>{state.products.find((p) => p.id === x.productId)?.name || 'Unknown'}</td><td>{x.quantity}</td><td>{currency.format(x.quantity * x.price)}</td><td><div className="menu-wrap"><button className="menu-trigger" type="button" onClick={() => setMenuSaleId(menuSaleId === x.id ? '' : x.id)}>⋮</button>{menuSaleId === x.id ? <div className="menu-card"><button type="button" onClick={() => startSaleEdit(x)}>Edit</button><button type="button" onClick={() => duplicateSale(x)}>Duplicate</button><button type="button" onClick={() => printSale(x)}>Print</button><button type="button" onClick={() => deleteSale(x)}>Delete</button></div> : null}</div></td></tr>)}</tbody></table></div></div>
               </div>
             ) : null}
 
@@ -725,17 +967,32 @@ export default function Page() {
 
             {activeView === 'expenses' ? (
               <div className="panel-subgrid">
-                <form className="form-card" onSubmit={submitExpense}>
+                <form className="form-card" onSubmit={submitExpense} ref={expenseFormRef}>
                   <h4>Record expense</h4>
+                  {editingExpenseId ? <div className="form-note">Editing existing expense</div> : null}
                   <label>Label<input name="label" placeholder="Rent, electricity, staff" required /></label>
                   <div className="split-fields">
                     <label>Category<input name="category" required /></label>
                     <label>Amount<input name="amount" type="number" step="0.01" min="0" required /></label>
                   </div>
                   <label>Notes<textarea name="notes" rows="3" /></label>
-                  <button className="primary-button" type="submit">Add expense</button>
+                  <div className="split-fields">
+                    <button className="primary-button" type="submit">{editingExpenseId ? 'Update expense' : 'Add expense'}</button>
+                    {editingExpenseId ? (
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={() => {
+                          setEditingExpenseId('');
+                          if (expenseFormRef.current) expenseFormRef.current.reset();
+                        }}
+                      >
+                        Cancel edit
+                      </button>
+                    ) : null}
+                  </div>
                 </form>
-                <div className="table-card"><div className="table-wrap"><table><thead><tr><th>Date</th><th>Label</th><th>Category</th><th>Amount</th></tr></thead><tbody>{state.expenses.map((x) => <tr key={x.id}><td>{dateFormatter.format(new Date(x.date))}</td><td>{x.label}</td><td>{x.category}</td><td>{currency.format(x.amount)}</td></tr>)}</tbody></table></div></div>
+                <div className="table-card"><div className="table-wrap"><table><thead><tr><th>Date</th><th>Label</th><th>Category</th><th>Amount</th><th>More</th></tr></thead><tbody>{state.expenses.map((x) => <tr key={x.id}><td>{dateFormatter.format(new Date(x.date))}</td><td>{x.label}</td><td>{x.category}</td><td>{currency.format(x.amount)}</td><td><div className="menu-wrap"><button className="menu-trigger" type="button" onClick={() => setMenuExpenseId(menuExpenseId === x.id ? '' : x.id)}>⋮</button>{menuExpenseId === x.id ? <div className="menu-card"><button type="button" onClick={() => startExpenseEdit(x)}>Edit</button><button type="button" onClick={() => duplicateExpense(x)}>Duplicate</button><button type="button" onClick={() => printExpense(x)}>Print</button><button type="button" onClick={() => deleteExpense(x)}>Delete</button></div> : null}</div></td></tr>)}</tbody></table></div></div>
               </div>
             ) : null}
           </article>
