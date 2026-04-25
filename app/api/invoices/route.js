@@ -234,3 +234,223 @@ export async function POST(request) {
     client.release();
   }
 }
+
+export async function PATCH(request) {
+  const db = getDb();
+  const client = await db.connect();
+
+  try {
+    await ensureSchema();
+
+    const { searchParams } = new URL(request.url);
+    const invoiceId = searchParams.get('invoiceId');
+    if (!invoiceId) {
+      return NextResponse.json({ error: 'invoiceId is required' }, { status: 400 });
+    }
+
+    const payload = await request.json();
+    const invoiceNumber = String(payload.invoiceNumber || '').trim();
+    if (!invoiceNumber) {
+      return NextResponse.json({ error: 'invoiceNumber is required' }, { status: 400 });
+    }
+
+    const items = Array.isArray(payload.items) && payload.items.length
+      ? payload.items
+      : parseItemsFromText(payload.linesText);
+
+    if (!items.length) {
+      return NextResponse.json({ error: 'At least one invoice line is required' }, { status: 400 });
+    }
+
+    const placeOfSupplyCode = String(payload.placeOfSupplyCode || SHOP_STATE_CODE).trim().toUpperCase();
+    const isInterstate = placeOfSupplyCode !== SHOP_STATE_CODE;
+    const invoiceDate = payload.invoiceDate || new Date().toISOString();
+
+    await client.query('begin');
+
+    const existingInvoiceResult = await client.query('select * from invoices where id = $1 limit 1', [invoiceId]);
+    if (!existingInvoiceResult.rows.length) {
+      await client.query('rollback');
+      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+    }
+
+    const existingInvoice = existingInvoiceResult.rows[0];
+    const oldInvoiceNumber = existingInvoice.invoice_number;
+
+    const updateInvoiceResult = await client.query(
+      `update invoices
+       set invoice_number = $1,
+           invoice_date = $2,
+           customer_name = $3,
+           customer_phone = $4,
+           customer_gstin = $5,
+           payment_mode = $6,
+           place_of_supply_code = $7,
+           is_interstate = $8,
+           notes = $9
+       where id = $10
+       returning *`,
+      [
+        invoiceNumber,
+        invoiceDate,
+        payload.customerName || '',
+        payload.customerPhone || '',
+        payload.customerGstin || '',
+        payload.paymentMode || '',
+        placeOfSupplyCode,
+        isInterstate,
+        payload.notes || '',
+        invoiceId,
+      ],
+    );
+
+    await client.query('delete from invoice_items where invoice_id = $1', [invoiceId]);
+    await client.query('delete from sales where notes = $1', [`Invoice ${oldInvoiceNumber}`]);
+
+    let subtotal = 0;
+    let cgstAmount = 0;
+    let sgstAmount = 0;
+    let igstAmount = 0;
+
+    for (let index = 0; index < items.length; index += 1) {
+      const item = items[index];
+      const lineTaxable = toMoney(item.quantity * item.rate);
+      const lineTax = toMoney((lineTaxable * Number(item.gstRate || 0)) / 100);
+      const lineCgst = isInterstate ? 0 : toMoney(lineTax / 2);
+      const lineSgst = isInterstate ? 0 : toMoney(lineTax / 2);
+      const lineIgst = isInterstate ? lineTax : 0;
+      const lineTotal = toMoney(lineTaxable + lineTax);
+
+      subtotal += lineTaxable;
+      cgstAmount += lineCgst;
+      sgstAmount += lineSgst;
+      igstAmount += lineIgst;
+
+      const productLookup = await client.query(
+        'select * from products where lower(name) = lower($1) limit 1',
+        [item.name],
+      );
+
+      let product = productLookup.rows[0];
+
+      if (!product) {
+        const sku = `DIGI-${Date.now()}-${index + 1}`;
+        const productInsert = await client.query(
+          `insert into products (id, name, category, sku, cost, price, gst_rate, hsn_code, stock, min_stock, supplier)
+           values (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, 0, 0, $8)
+           returning *`,
+          [item.name, payload.defaultCategory || 'Digitized', sku, item.rate, item.rate, item.gstRate || 0, item.hsnCode || '', 'Legacy Invoice Import'],
+        );
+        product = productInsert.rows[0];
+      }
+
+      await client.query(
+        `insert into invoice_items (
+           id, invoice_id, product_id, product_name, hsn_code, quantity, rate,
+           gst_rate, taxable_amount, cgst_amount, sgst_amount, igst_amount, line_total
+         )
+         values (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [
+          invoiceId,
+          product.id,
+          item.name,
+          item.hsnCode || '',
+          item.quantity,
+          item.rate,
+          item.gstRate || 0,
+          lineTaxable,
+          lineCgst,
+          lineSgst,
+          lineIgst,
+          lineTotal,
+        ],
+      );
+
+      await client.query(
+        `insert into sales (id, date, product_id, quantity, price, channel, notes)
+         values (gen_random_uuid(), $1, $2, $3, $4, $5, $6)`,
+        [invoiceDate, product.id, item.quantity, item.rate, payload.paymentMode || '', `Invoice ${invoiceNumber}`],
+      );
+    }
+
+    const subtotalFinal = toMoney(subtotal);
+    const cgstFinal = toMoney(cgstAmount);
+    const sgstFinal = toMoney(sgstAmount);
+    const igstFinal = toMoney(igstAmount);
+    const totalTax = toMoney(cgstFinal + sgstFinal + igstFinal);
+    const totalAmount = toMoney(subtotalFinal + totalTax);
+
+    const totalsUpdateResult = await client.query(
+      `update invoices
+       set subtotal = $1,
+           cgst_amount = $2,
+           sgst_amount = $3,
+           igst_amount = $4,
+           total_tax = $5,
+           total_amount = $6
+       where id = $7
+       returning *`,
+      [subtotalFinal, cgstFinal, sgstFinal, igstFinal, totalTax, totalAmount, invoiceId],
+    );
+
+    const updatedItemsResult = await client.query(
+      'select * from invoice_items where invoice_id = $1 order by product_name asc',
+      [invoiceId],
+    );
+
+    await client.query('commit');
+
+    return NextResponse.json(
+      {
+        invoice: mapInvoice(totalsUpdateResult.rows[0] || updateInvoiceResult.rows[0]),
+        invoiceItems: updatedItemsResult.rows.map(mapInvoiceItem),
+      },
+      { status: 200 },
+    );
+  } catch (error) {
+    await client.query('rollback');
+
+    if (error.code === '23505') {
+      return NextResponse.json({ error: 'Invoice number already exists' }, { status: 409 });
+    }
+
+    return NextResponse.json({ error: error.message || 'Failed to update invoice' }, { status: 500 });
+  } finally {
+    client.release();
+  }
+}
+
+export async function DELETE(request) {
+  const db = getDb();
+  const client = await db.connect();
+
+  try {
+    await ensureSchema();
+    const { searchParams } = new URL(request.url);
+    const invoiceId = searchParams.get('invoiceId');
+
+    if (!invoiceId) {
+      return NextResponse.json({ error: 'invoiceId is required' }, { status: 400 });
+    }
+
+    await client.query('begin');
+
+    const existingResult = await client.query('select invoice_number from invoices where id = $1 limit 1', [invoiceId]);
+    if (!existingResult.rows.length) {
+      await client.query('rollback');
+      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+    }
+
+    const invoiceNumber = existingResult.rows[0].invoice_number;
+    await client.query('delete from sales where notes = $1', [`Invoice ${invoiceNumber}`]);
+    await client.query('delete from invoices where id = $1', [invoiceId]);
+
+    await client.query('commit');
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    await client.query('rollback');
+    return NextResponse.json({ error: error.message || 'Failed to delete invoice' }, { status: 500 });
+  } finally {
+    client.release();
+  }
+}

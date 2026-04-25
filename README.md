@@ -27,6 +27,35 @@ npm install
 export DATABASE_URL="postgres://user:password@localhost:5432/my_shop_app"
 ```
 
+### Start PostgreSQL (if not running)
+
+Use either Docker (recommended in dev containers) or local Ubuntu service.
+
+Option 1: Docker
+
+```bash
+docker run --name myshop-postgres \
+	-e POSTGRES_USER=shop \
+		-e POSTGRES_PASSWORD=shop \
+			-e POSTGRES_DB=my_shop_app \
+				-p 5432:5432 \
+					-d postgres:16
+```
+
+Check status:
+
+```bash
+docker ps
+docker exec -it myshop-postgres pg_isready -U shop -d my_shop_app
+```
+
+Option 2: Ubuntu service (when PostgreSQL is installed locally)
+
+```bash
+sudo service postgresql start
+sudo service postgresql status
+```
+
 3. Start development server.
 
 ```bash
@@ -40,7 +69,6 @@ Open http://localhost:3000.
 - Tables are auto-created on first API call.
 - Seed products are inserted when the products table is empty.
 - Product records include `gst_rate` and `hsn_code` for GST-ready entries.
-- Old bills can be digitized from the `Invoices` tab with line format:
 - You can upload a scanned bill image or PDF in `Invoices` tab; detected rows are auto-filled and can be edited before saving.
 - Old bills can also be digitized manually with line format:
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const currency = new Intl.NumberFormat('en-IN', {
   style: 'currency',
@@ -21,6 +21,7 @@ const initialState = {
   adjustments: [],
   expenses: [],
   invoices: [],
+  invoiceItems: [],
 };
 
 const navItems = ['overview', 'products', 'inventory', 'purchases', 'sales', 'invoices', 'adjustments', 'expenses'];
@@ -81,6 +82,9 @@ export default function Page() {
   const [invoiceLines, setInvoiceLines] = useState('');
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrMessage, setOcrMessage] = useState('');
+  const [menuInvoiceId, setMenuInvoiceId] = useState('');
+  const [editingInvoiceId, setEditingInvoiceId] = useState('');
+  const invoiceFormRef = useRef(null);
 
   useEffect(() => {
     fetchBootstrap();
@@ -101,16 +105,21 @@ export default function Page() {
     }
   }
 
-  async function post(endpoint, payload) {
+  async function requestJson(endpoint, payload, method = 'POST') {
     const response = await fetch(endpoint, {
-      method: 'POST',
+      method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: payload === undefined ? undefined : JSON.stringify(payload),
     });
     const body = await response.json();
     if (!response.ok) {
       throw new Error(body.error || 'Request failed');
     }
+    return body;
+  }
+
+  async function post(endpoint, payload) {
+    await requestJson(endpoint, payload, 'POST');
     await fetchBootstrap();
   }
 
@@ -138,6 +147,14 @@ export default function Page() {
       return true;
     });
   }, [state.products, stockFilter]);
+
+  const invoiceItemsById = useMemo(() => {
+    return state.invoiceItems.reduce((acc, item) => {
+      if (!acc[item.invoiceId]) acc[item.invoiceId] = [];
+      acc[item.invoiceId].push(item);
+      return acc;
+    }, {});
+  }, [state.invoiceItems]);
 
   const alerts = useMemo(() => {
     const lowStock = state.products.filter((p) => p.stock <= p.minStock);
@@ -232,7 +249,7 @@ export default function Page() {
   async function submitInvoice(event) {
     event.preventDefault();
     const fd = new FormData(event.currentTarget);
-    await post('/api/invoices', {
+    const payload = {
       invoiceNumber: String(fd.get('invoiceNumber')).trim(),
       invoiceDate: fd.get('invoiceDate') ? new Date(String(fd.get('invoiceDate'))).toISOString() : new Date().toISOString(),
       customerName: String(fd.get('customerName') || '').trim(),
@@ -244,10 +261,115 @@ export default function Page() {
       linesText: invoiceLines.trim(),
       source: 'digitized',
       affectStock: fd.get('affectStock') === 'on',
-    });
+    };
+
+    if (editingInvoiceId) {
+      await requestJson(`/api/invoices?invoiceId=${editingInvoiceId}`, payload, 'PATCH');
+      await fetchBootstrap();
+    } else {
+      await post('/api/invoices', payload);
+    }
+
     event.currentTarget.reset();
     setInvoiceLines('');
     setOcrMessage('');
+    setEditingInvoiceId('');
+    setMenuInvoiceId('');
+  }
+
+  function linesFromInvoice(invoiceId) {
+    return (invoiceItemsById[invoiceId] || [])
+      .map((item) => `${item.productName},${item.quantity},${item.rate},${item.gstRate},${item.hsnCode || ''}`)
+      .join('\n');
+  }
+
+  function loadInvoiceInForm(invoice, options = {}) {
+    const form = invoiceFormRef.current;
+    if (!form) return;
+
+    const dateValue = new Date(invoice.invoiceDate).toISOString().slice(0, 10);
+    form.invoiceNumber.value = options.invoiceNumber || invoice.invoiceNumber;
+    form.invoiceDate.value = dateValue;
+    form.customerName.value = invoice.customerName || '';
+    form.customerPhone.value = invoice.customerPhone || '';
+    form.customerGstin.value = invoice.customerGstin || '';
+    form.paymentMode.value = invoice.paymentMode || '';
+    form.placeOfSupplyCode.value = invoice.placeOfSupplyCode || 'MH';
+    form.notes.value = invoice.notes || '';
+
+    setInvoiceLines(linesFromInvoice(invoice.id));
+    setActiveView('invoices');
+    setEditingInvoiceId(options.editing ? invoice.id : '');
+    setMenuInvoiceId('');
+    setOcrMessage(options.message || '');
+  }
+
+  function duplicateInvoice(invoice) {
+    loadInvoiceInForm(invoice, {
+      editing: false,
+      invoiceNumber: `${invoice.invoiceNumber}-COPY`,
+      message: 'Invoice loaded as template. Update number/date and submit as new.',
+    });
+  }
+
+  function startInvoiceEdit(invoice) {
+    loadInvoiceInForm(invoice, {
+      editing: true,
+      message: 'Editing mode active. Submit to update this invoice.',
+    });
+  }
+
+  async function deleteInvoice(invoice) {
+    const confirmed = window.confirm(`Delete invoice ${invoice.invoiceNumber}? This cannot be undone.`);
+    if (!confirmed) return;
+
+    await requestJson(`/api/invoices?invoiceId=${invoice.id}`, undefined, 'DELETE');
+    await fetchBootstrap();
+    setMenuInvoiceId('');
+
+    if (editingInvoiceId === invoice.id) {
+      setEditingInvoiceId('');
+      setInvoiceLines('');
+      setOcrMessage('');
+      if (invoiceFormRef.current) invoiceFormRef.current.reset();
+    }
+  }
+
+  function printInvoice(invoice) {
+    const items = invoiceItemsById[invoice.id] || [];
+    const rows = items
+      .map((item) => `<tr><td>${item.productName}</td><td>${item.quantity}</td><td>${item.rate}</td><td>${item.gstRate}%</td><td>${item.lineTotal}</td></tr>`)
+      .join('');
+
+    const win = window.open('', '_blank', 'width=960,height=700');
+    if (!win) return;
+
+    win.document.write(`
+      <html>
+        <head>
+          <title>Invoice ${invoice.invoiceNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          </style>
+        </head>
+        <body>
+          <h2>Invoice ${invoice.invoiceNumber}</h2>
+          <p>Date: ${dateFormatter.format(new Date(invoice.invoiceDate))}</p>
+          <p>Customer: ${invoice.customerName || '-'}</p>
+          <p>GSTIN: ${invoice.customerGstin || '-'}</p>
+          <table>
+            <thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>GST</th><th>Total</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <h3 style="margin-top: 16px;">Total: ${currency.format(invoice.totalAmount)}</h3>
+        </body>
+      </html>
+    `);
+    win.document.close();
+    win.focus();
+    win.print();
   }
 
   async function extractTextFromPdf(file) {
@@ -479,8 +601,9 @@ export default function Page() {
 
             {activeView === 'invoices' ? (
               <div className="panel-subgrid">
-                <form className="form-card" onSubmit={submitInvoice}>
+                <form className="form-card" onSubmit={submitInvoice} ref={invoiceFormRef}>
                   <h4>Digitize old invoice</h4>
+                  {editingInvoiceId ? <div className="form-note">Editing existing invoice</div> : null}
                   <div className="split-fields">
                     <label>Invoice number<input name="invoiceNumber" placeholder="e.g. 24-25/0191" required /></label>
                     <label>Invoice date<input name="invoiceDate" type="date" required /></label>
@@ -525,7 +648,23 @@ export default function Page() {
                   </label>
                   <label>Notes<textarea name="notes" rows="2" placeholder="Legacy bill details / remarks" /></label>
                   <label className="checkbox-line"><input name="affectStock" type="checkbox" />Also reduce stock for this imported invoice</label>
-                  <button className="primary-button" type="submit">Digitize invoice</button>
+                  <div className="split-fields">
+                    <button className="primary-button" type="submit">{editingInvoiceId ? 'Update invoice' : 'Digitize invoice'}</button>
+                    {editingInvoiceId ? (
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={() => {
+                          setEditingInvoiceId('');
+                          setInvoiceLines('');
+                          setOcrMessage('');
+                          if (invoiceFormRef.current) invoiceFormRef.current.reset();
+                        }}
+                      >
+                        Cancel edit
+                      </button>
+                    ) : null}
+                  </div>
                 </form>
                 <div className="table-card">
                   <div className="table-header">
@@ -533,7 +672,7 @@ export default function Page() {
                   </div>
                   <div className="table-wrap">
                     <table>
-                      <thead><tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Tax split</th><th>Total</th></tr></thead>
+                      <thead><tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Tax split</th><th>Total</th><th>More</th></tr></thead>
                       <tbody>
                         {state.invoices.map((x) => (
                           <tr key={x.id}>
@@ -546,6 +685,19 @@ export default function Page() {
                                 : `CGST ${currency.format(x.cgstAmount)} + SGST ${currency.format(x.sgstAmount)}`}
                             </td>
                             <td>{currency.format(x.totalAmount)}</td>
+                            <td>
+                              <div className="menu-wrap">
+                                <button className="menu-trigger" onClick={() => setMenuInvoiceId(menuInvoiceId === x.id ? '' : x.id)} type="button">⋮</button>
+                                {menuInvoiceId === x.id ? (
+                                  <div className="menu-card">
+                                    <button type="button" onClick={() => startInvoiceEdit(x)}>Edit</button>
+                                    <button type="button" onClick={() => duplicateInvoice(x)}>Duplicate</button>
+                                    <button type="button" onClick={() => printInvoice(x)}>Print</button>
+                                    <button type="button" onClick={() => deleteInvoice(x)}>Delete</button>
+                                  </div>
+                                ) : null}
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
