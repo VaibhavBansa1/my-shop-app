@@ -81,4 +81,6 @@ See [docs/MOBILE.md](docs/MOBILE.md). In short: `cd mobile && npm install && npx
 ## Deploying
 Any Node host plus managed Postgres. Set `DATABASE_URL` (shop_app role), `DATABASE_OWNER_URL`
 (for migrations only), `APP_ORIGIN=https://your-domain`, `NODE_ENV=production`, and `TRUST_PROXY=1`
-if behind a proxy/load balancer. Run `npm run db:migrate` on each deploy, then `npm run build && npm start`.
+if behind a proxy/load balancer. For password-reset emails set `RESEND_API_KEY` and `EMAIL_FROM`.
+Run `npm run db:migrate` on each deploy, then `npm run build && npm start`, and schedule
+`npm run db:cleanup` daily.

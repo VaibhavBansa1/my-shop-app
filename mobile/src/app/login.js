@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, Linking, Platform, ScrollView, View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { login } from '../lib/api.js';
 import { getServerUrl } from '../lib/config.js';
@@ -38,6 +38,7 @@ export default function Login() {
           </Card>
           <View style={{ alignItems: 'center', gap: 14, marginTop: 8 }}>
             <Link href="/signup"><T style={{ fontWeight: '700' }}>New here? Create an account</T></Link>
+            {server ? <T muted onPress={() => Linking.openURL(`${server}/forgot`)} accessibilityRole="link">Forgot password?</T> : null}
             <Link href="/server"><T muted small>Server: {server || 'not set'} · change</T></Link>
           </View>
         </ScrollView>

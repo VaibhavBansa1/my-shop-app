@@ -39,7 +39,9 @@ cannot delete vouchers/audit), `test/vouchers.test.js` (balance trigger, immutab
 `scripts/smoke.mjs` over HTTP (CSRF, cross-org 404s, forged sessions, bearer flow, mobile flow, OCR).
 
 ## Known gaps / next steps
-- Email verification and password reset need an email provider (not set up yet).
+- Password reset is built (one-time 30-minute links, hashed tokens, same answer for unknown emails, signs out
+  everywhere). It needs an email provider in production: set `RESEND_API_KEY` and `EMAIL_FROM`.
+- Email verification of new accounts is not built yet.
 - Two-factor authentication (TOTP) for owners/admins.
 - Sign-up reveals whether an email already has an account (accepted trade-off for usability).
 - Per-IP throttling needs `TRUST_PROXY=1` behind a proxy that sets `X-Forwarded-For`.

@@ -45,6 +45,7 @@ export default function AuthForm({ mode }) {
             <input type="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} required
               minLength={mode === 'signup' ? 10 : 1} maxLength={200} value={form.password} onChange={set('password')} />
           </Field>
+          {mode !== 'signup' && <p style={{ margin: '-4px 0 0', textAlign: 'right' }}><Link href="/forgot" style={{ fontSize: 13 }}>Forgot password?</Link></p>}
           <button className="btn btn-primary btn-block" disabled={busy}>{busy ? 'Please wait…' : mode === 'signup' ? 'Create account' : 'Sign in'}</button>
           <p className="muted" style={{ textAlign: 'center' }}>
             {mode === 'signup'

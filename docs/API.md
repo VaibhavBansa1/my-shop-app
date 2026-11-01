@@ -26,6 +26,8 @@ Dates are `YYYY-MM-DD`.
 | POST | `/auth/login` | — | `{email, password, returnToken?}` |
 | POST | `/auth/logout` | signed in | ends this session |
 | POST | `/auth/password` | signed in | `{currentPassword, newPassword}`; signs out other devices |
+| POST | `/auth/password-reset/request` | — | `{email}`; always the same answer (no account enumeration); 3/hour per email |
+| POST | `/auth/password-reset/confirm` | — | `{token, newPassword}`; one-time, 30-minute token; signs out all devices |
 | GET | `/me` | signed in | user + organizations with your role |
 | GET/POST | `/invitations/accept` | signed in | GET `?token=` preview; POST `{token}` join |
 | GET/POST | `/orgs` | signed in | list / create (you become owner; chart of accounts is seeded) |

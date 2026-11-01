@@ -14,7 +14,8 @@
     "db:migrate": "node scripts/migrate.mjs",
     "test": "node --test --test-concurrency=1 \"test/**/*.test.js\"",
     "db:setup": "bash scripts/db-setup.sh",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "db:cleanup": "node scripts/cleanup.mjs"
   },
   "dependencies": {
     "@tesseract.js-data/eng": "^1.0.0",

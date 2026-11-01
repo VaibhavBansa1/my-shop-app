@@ -41,7 +41,9 @@ users ──< memberships >── organizations ──< invitations
 - **users** — `email citext unique`, `name`, `password_hash` (`scrypt$N$r$p$salt$hash`).
 - **sessions** — `token_hash bytea pk` (sha256 of the client token), `user_id`, `expires_at`
   (sliding 30 days), `created_at` (hard cap 90 days), `ip`, `user_agent`.
-- **login_attempts** — throttling counters keyed `email:<x>`, `ip:<x>`, `signup-ip:<x>`.
+- **login_attempts** — throttling counters keyed `email:<x>`, `ip:<x>`, `signup-ip:<x>`, `reset-email:<x>`,
+  `ocr-image:<user>`, `ocr-text:<user>`.
+- **password_resets** — `token_hash` (sha256), `user_id`, 30-minute `expires_at`, `used_at`.
 
 ### Tenancy
 - **organizations** — name, legal name, `gstin` (15 chars, validated), `state_code` (GST code,
@@ -95,3 +97,4 @@ users ──< memberships >── organizations ──< invitations
 | 004_definer_policies | lets the two SECURITY DEFINER functions see invitations under FORCE RLS |
 | 005_fix_accept_invitation | OUT-parameter name clash fix |
 | 006_deferrable_master_fks | org deletion with vouchers; revoke DELETE on masters |
+| 007_password_resets | one-time password reset tokens (hashed) |
