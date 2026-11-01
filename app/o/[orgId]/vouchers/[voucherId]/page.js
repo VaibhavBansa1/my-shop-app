@@ -6,6 +6,7 @@ import { useApi, Loading, ErrorNote, Field } from '../../../../ui/components.js'
 import { useOrg } from '../../../../ui/OrgContext.js';
 import { money, amount, date, qty, VOUCHER_TYPES } from '../../../../ui/format.js';
 import { STATES } from '../../../../ui/states.js';
+import { invoiceMessage, whatsappUrl } from '../../../../../shared/messages.js';
 
 export default function VoucherView({ params }) {
   const { voucherId } = use(params);
@@ -32,6 +33,8 @@ export default function VoucherView({ params }) {
         <Link className="btn btn-sm" href={`${base}/vouchers`}>← Vouchers</Link>
         <span className="spacer" />
         <button className="btn btn-sm" onClick={() => window.print()}>Print / PDF</button>
+        {d.items.length > 0 && d.status === 'posted' && <a className="btn btn-sm" target="_blank" rel="noopener noreferrer"
+          href={whatsappUrl('', invoiceMessage({ shopName: org.legalName || org.name, label: d.label, date: date(d.date), total: d.total, items: d.items }))}>WhatsApp</a>}
         {d.status === 'posted' && can('voucher.cancel') && can(`voucher.create.${d.type}`) && <Link className="btn btn-sm" href={`${base}/vouchers/new?type=${d.type}&from=${d.id}`}>Correct…</Link>}
         {d.status === 'posted' && can('voucher.cancel') && <button className="btn btn-sm btn-danger" onClick={() => setCancelling(true)}>Cancel voucher</button>}
       </div>

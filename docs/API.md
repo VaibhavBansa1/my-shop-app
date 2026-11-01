@@ -35,7 +35,7 @@ Dates are `YYYY-MM-DD`.
 | GET/POST | `/invitations/accept` | signed in | GET `?token=` preview; POST `{token}` join |
 | GET/POST | `/orgs` | signed in | list / create (you become owner; chart of accounts is seeded) |
 | GET | `/orgs/{org}` | viewer | includes `permissions` for your role |
-| PATCH | `/orgs/{org}` | admin | business details, `aiEnabled` |
+| PATCH | `/orgs/{org}` | admin | business details, `aiEnabled`, `upiId` |
 | DELETE | `/orgs/{org}` | owner | `{confirmName}` must equal the name |
 | GET | `/orgs/{org}/members` | admin | members + pending invitations |
 | PATCH/DELETE | `/orgs/{org}/members/{userId}` | admin (self-delete = leave, any role) | `{role}` |
@@ -54,6 +54,11 @@ Dates are `YYYY-MM-DD`.
 | GET | `/orgs/{org}/reports/{name}` | viewer | `dashboard, trial-balance, profit-loss, balance-sheet, day-book, stock-summary, gst-summary, outstanding (?kind=receivable|payable), ledger (?ledger=)`; `?from=&to=` |
 | GET | `/orgs/{org}/audit` | admin | `?before=&limit=` |
 | GET | `/orgs/{org}/export` | admin | complete JSON backup of the business (download) |
+| GET | `/orgs/{org}/notifications` | viewer | your inbox: `?unread=1&limit=`; returns `{unread, notifications[]}` |
+| POST | `/orgs/{org}/notifications/read` | viewer | `{ids:[…]}` or `{all:true}` |
+| GET/PATCH | `/orgs/{org}/notification-settings` | viewer | `{notifyEmail}` — daily summary by email |
+| GET | `/orgs/{org}/reminders/{ledgerId}` | cashier | `?language=en|hi|hinglish` → message, phone, WhatsApp/SMS links, last reminder |
+| POST | `/orgs/{org}/reminders/{ledgerId}` | cashier | `{channel: whatsapp|sms|email|copy, language, message?}` records (or emails) a reminder; 3/customer/day |
 | POST | `/orgs/{org}/ocr/invoice` | accountant | body = photo bytes, `Content-Type: image/jpeg` or `image/png`, ≤ 8 MB; returns a purchase draft. 60/hour per user |
 | POST | `/orgs/{org}/ai/summary` | viewer | `{period: today|week|month|fy, language: en|hi|hinglish, question?}` → `{summary, provider, model, local, namesShared}`; business must have AI on; 30/hour |
 | POST | `/orgs/{org}/ocr/parse` | accountant | `{text}` (≤ 50,000 chars) from on-device OCR; returns a purchase draft. 300/hour per user |

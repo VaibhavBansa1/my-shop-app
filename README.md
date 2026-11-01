@@ -20,6 +20,7 @@ work in a private space isolated at the database level.
 - **Scan supplier invoices** (OCR on the phone or on the server) into reviewed purchase entries
 - **Optional AI shop summaries** in English/Hindi/Hinglish with a local LLM (Ollama, LM Studio) or Groq/OpenRouter/Grok
 - Email: account confirmation, password reset, invitations (SMTP or Resend)
+- **Notifications** (cancelled bills, low stock, new members, daily summary) and **payment reminders** by WhatsApp/SMS/email with your UPI ID
 - Audit log of every change; one REST API for the website and the Android app
 
 ## Run it on your computer
@@ -82,6 +83,7 @@ See [docs/MOBILE.md](docs/MOBILE.md). In short: `cd mobile && npm install && npx
 - [docs/OCR.md](docs/OCR.md) — invoice scanning
 - [docs/AI.md](docs/AI.md) — connecting Ollama / LM Studio / Groq / OpenRouter
 - [docs/EMAIL.md](docs/EMAIL.md) — email providers and account verification
+- [docs/NOTIFICATIONS.md](docs/NOTIFICATIONS.md) — alerts, daily summary, payment reminders
 - [docs/MANUAL_TESTING.md](docs/MANUAL_TESTING.md) — checklist for manual testing and owner decisions
 - [docs/HANDOFF.md](docs/HANDOFF.md) — current status and what to build next
 

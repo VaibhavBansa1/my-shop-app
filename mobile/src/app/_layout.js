@@ -24,6 +24,8 @@ function Nav() {
         <Stack.Screen name="ledger/[id]" options={{ title: 'Ledger' }} />
         <Stack.Screen name="item-new" options={{ title: 'New stock item' }} />
         <Stack.Screen name="summary" options={{ title: 'Shop summary (AI)' }} />
+        <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
+        <Stack.Screen name="remind/[id]" options={{ title: 'Payment reminder' }} />
       </Stack>
     </>
   );

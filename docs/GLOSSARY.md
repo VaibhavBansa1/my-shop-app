@@ -179,6 +179,20 @@ server has email set up).
 
 ---
 
+## Notifications and messages
+
+**Notifications (🔔)** — Alerts inside the app for your team: a bill was cancelled, stock is low, someone
+joined, and the daily summary. Only you can see your own notifications.
+
+**Daily summary** — Yesterday's sales, receipts, payments, money due and low stock, as a notification (and
+an email if you turn it on in Settings).
+
+**Payment reminder** — A polite message to a customer who owes money, sent by WhatsApp, SMS or email, in
+English, Hindi or Hinglish.
+
+**UPI ID** — Your payment address in Indian UPI apps (like `shopname@okhdfcbank`). Added to reminders so
+customers can pay immediately.
+
 ## Scanning and AI
 
 **Scan invoice (OCR)** — Take a photo of a supplier's bill; the app reads the text (OCR = optical character

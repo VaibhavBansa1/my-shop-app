@@ -76,9 +76,10 @@ function Body({ id, d, base }) {
     </>);
   }
   if (id.startsWith('outstanding')) return (
-    <table><thead><tr><th>Party</th><th className="num">{d.kind === 'payable' ? 'You owe' : 'Owes you'}</th></tr></thead>
-      <tbody>{d.parties.map((p) => <tr key={p.ledgerId}><td><Link href={`${base}/ledgers/${p.ledgerId}`}>{p.ledger}</Link></td><td className="num">{amount(p.amount)}</td></tr>)}</tbody>
-      <tfoot><tr><td>Total</td><td className="num">{money(d.total)}</td></tr></tfoot></table>
+    <table><thead><tr><th>Party</th><th className="num">{d.kind === 'payable' ? 'You owe' : 'Owes you'}</th>{d.kind !== 'payable' && <th className="no-print"></th>}</tr></thead>
+      <tbody>{d.parties.map((p) => <tr key={p.ledgerId}><td><Link href={`${base}/ledgers/${p.ledgerId}`}>{p.ledger}</Link></td><td className="num">{amount(p.amount)}</td>
+        {d.kind !== 'payable' && <td className="num no-print">{p.amount > 0 && <Link className="btn btn-sm" href={`${base}/remind/${p.ledgerId}`}>Remind</Link>}</td>}</tr>)}</tbody>
+      <tfoot><tr><td>Total</td><td className="num">{money(d.total)}</td>{d.kind !== 'payable' && <td />}</tr></tfoot></table>
   );
   return null;
 }

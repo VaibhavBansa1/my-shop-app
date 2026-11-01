@@ -9,13 +9,14 @@ import { STATE_LIST } from '../../../ui/states.js';
 export default function Settings() {
   const { org, can, reloadOrg } = useOrg();
   const editable = can('org.update');
-  const [form, setForm] = useState({ name: org.name, legalName: org.legalName, gstin: org.gstin ?? '', stateCode: org.stateCode ?? '',
+  const [form, setForm] = useState({ name: org.name, legalName: org.legalName, gstin: org.gstin ?? '', stateCode: org.stateCode ?? '', upiId: org.upiId ?? '',
     address: org.address, phone: org.phone, email: org.email, fyStartMonth: org.fyStartMonth, booksFrom: org.booksFrom });
   const [pw, setPw] = useState({ currentPassword: '', newPassword: '' });
   const [msg, setMsg] = useState(null);
   const [error, setError] = useState(null);
   const [confirmName, setConfirmName] = useState('');
   const ai = useApi(() => api('/ai/status'), []);
+  const notify = useApi(() => api(`/orgs/${org.id}/notification-settings`), [org.id]);
   const audit = useApi(() => (can('audit.read') ? api(`/orgs/${org.id}/audit`, { query: { limit: 50 } }) : Promise.resolve(null)), [org.id]);
   const set = (k) => (e) => {
     const v = e.target.value;
@@ -46,11 +47,23 @@ export default function Settings() {
             <Field label="Financial year starts in"><select value={form.fyStartMonth} onChange={set('fyStartMonth')}>
               {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select></Field>
             <Field label="Books begin from"><input type="date" value={form.booksFrom} onChange={set('booksFrom')} /></Field>
+            <Field label="UPI ID (optional)" hint="Added to payment reminders so customers can pay instantly, e.g. shopname@okhdfcbank"><input maxLength={130} value={form.upiId} onChange={set('upiId')} autoCapitalize="none" /></Field>
           </div>
           <Field label="Address"><textarea maxLength={500} value={form.address} onChange={set('address')} /></Field>
           {editable && <div className="row"><button className="btn btn-primary">Save</button></div>}
         </fieldset>
       </form>
+
+      <div className="card grid" id="notifications">
+        <h2>Notifications</h2>
+        <p className="muted">In the app (🔔): cancelled bills and new members for owners/admins; low stock and the daily summary for accountants and above.</p>
+        <label className="row" style={{ gap: 10 }}>
+          <input type="checkbox" style={{ width: 20, minHeight: 20 }} checked={Boolean(notify.data?.notifyEmail)} disabled={!notify.data}
+            onChange={(e) => run(async () => { await api(`/orgs/${org.id}/notification-settings`, { method: 'PATCH', body: { notifyEmail: e.target.checked } }); notify.reload(); },
+              e.target.checked ? 'You will get the daily summary by email.' : 'Daily summary emails turned off.')} />
+          <span>Email me the daily summary for this business</span>
+        </label>
+      </div>
 
       <div className="card grid">
         <h2>AI assistant (optional)</h2>

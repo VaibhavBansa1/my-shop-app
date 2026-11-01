@@ -16,6 +16,7 @@ export default function More() {
           <T muted>{s.user.name} · {ROLE_LABEL[s.org.role]}</T>
         </Card>
         <Card>
+          <Row title="🔔 Notifications" subtitle="Cancelled bills, low stock, new members, daily summary" right="›" onPress={go('/notifications')} />
           {s.can('voucher.create.receipt') && <Row title="Receive money" subtitle="From a customer" right="›" onPress={go('/entry', { type: 'receipt' })} />}
           {s.can('voucher.create.payment') && <Row title="Pay / expense" subtitle="Rent, salary, supplier payment…" right="›" onPress={go('/entry', { type: 'payment' })} />}
           {s.can('voucher.create.purchase') && <Row title="Scan purchase invoice" subtitle="Read a supplier bill with the camera" right="›" onPress={go('/scan')} />}

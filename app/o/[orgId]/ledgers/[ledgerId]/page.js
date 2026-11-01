@@ -16,7 +16,9 @@ export default function LedgerStatement({ params }) {
   const st = useApi(() => api(`/orgs/${org.id}/reports/ledger`, { query: { ledger: ledgerId, from, to } }), [org.id, ledgerId, from, to]);
   return (
     <>
-      <PageHead title={st.data?.ledger ?? 'Ledger'} sub="Ledger statement" actions={<button className="btn no-print" onClick={() => window.print()}>Print</button>} />
+      <PageHead title={st.data?.ledger ?? 'Ledger'} sub="Ledger statement" actions={<>
+        {st.data?.closing > 0 && <Link className="btn no-print" href={`${base}/remind/${ledgerId}`}>Send payment reminder</Link>}
+        <button className="btn no-print" onClick={() => window.print()}>Print</button></>} />
       <div className="row no-print" style={{ marginBottom: 12 }}>
         <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ maxWidth: 170 }} aria-label="From" />
         <span className="muted">to</span>

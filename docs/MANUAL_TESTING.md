@@ -51,6 +51,16 @@ These need your judgement; the code works either way.
 5. Try LM Studio and Groq the same way (see docs/AI.md). With Groq, confirm the note says names were not shared.
 6. Stop Ollama and press Summarise → a clear "Could not reach the AI server" message.
 
+## Notifications and reminders
+1. As owner, invite a cashier; when they join, 🔔 shows "… joined as cashier".
+2. As the cashier, make a sale that takes an item to its reorder level → accountants/owner see "Low stock".
+3. As an accountant, cancel a bill → owner and admins see "… cancelled by …" with the reason.
+4. Settings → Notifications → email me the daily summary; run `npm run notify:daily` the next day (or after
+   entering a voucher dated yesterday) → notification + email (Mailpit).
+5. Settings → UPI ID. Reports → Receivables → Remind → Hindi → WhatsApp opens with the customer's number
+   and text; "Last reminded … by whatsapp" appears. Try the 4th reminder the same day → refused.
+6. Phone: More shows a badge with the unread count; customer ledger → Send payment reminder → WhatsApp.
+
 ## Android app
 1. Build: `cd mobile && npx expo run:android` (or EAS preview APK). Set Server to your PC's address.
 2. Sign in with the website account → pick the business → Home numbers match the website.

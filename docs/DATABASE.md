@@ -100,3 +100,5 @@ users ──< memberships >── organizations ──< invitations
 | 007_password_resets | one-time password reset tokens (hashed) |
 | 008_email_verification | `users.email_verified_at`, `email_verifications` tokens |
 | 009_org_ai_setting | `organizations.ai_enabled` opt-in |
+| 010_notifications | `notifications` (per recipient, RLS), `memberships.notify_email`, `organizations.upi_id`, join alerts, job helpers |
+| 011_fix_upi_check | UPI ID check within Postgres regex limits |

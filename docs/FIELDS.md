@@ -33,6 +33,7 @@ Email confirmation: required before creating/joining a business **when the serve
 | Financial year starts | Opt | April | Indian FY is April–March; other countries can change it. Voucher numbers restart each FY. |
 | Books begin from | Opt | today | Date of opening balances. Cannot move after the first voucher *(server)*, because that would silently change opening figures. |
 | AI summaries | Opt | **off** | Privacy: a business opts in explicitly (owner/admin). |
+| UPI ID | Opt | empty | Added to payment reminders when set. Format `name@bank` checked. |
 | Country / currency | Opt | IN / INR | Kept for future use; the app is built for Indian GST today. |
 
 ---
@@ -105,6 +106,15 @@ cancelled with "replaced by …" in the same step.
 Rules: only owners manage owners/admins; the last owner can't leave or be demoted.
 
 ---
+
+## Notifications and reminders
+
+| Field | Req? | Default | Why |
+|---|---|---|---|
+| Email me the daily summary | Opt | **off** | Per person per business; nobody gets email they did not ask for. |
+| Reminder language | Opt | English | English, Hindi, Hinglish. |
+| Reminder text | Opt | template | Editable before sending; ≤ 1000 characters. |
+| Customer phone | Opt | — | Needed to open WhatsApp/SMS directly to the customer; without it WhatsApp asks you to pick a contact. |
 
 ## Scanning and AI
 

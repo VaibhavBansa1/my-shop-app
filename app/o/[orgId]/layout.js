@@ -1,5 +1,5 @@
 'use client';
-import { use } from 'react';
+import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { api } from '../../ui/api.js';
@@ -14,6 +14,7 @@ const NAV = [
   { href: '/items', label: 'Stock', ico: '▦' },
   { href: '/ledgers', label: 'Parties & ledgers', short: 'Ledgers', ico: '☰' },
   { href: '/reports', label: 'Reports', ico: '◔' },
+  { href: '/notifications', label: 'Notifications', ico: '🔔', badge: true },
   { sep: true },
   { href: '/team', label: 'Team', ico: '☺', perm: 'members.read' },
   { href: '/settings', label: 'Settings', ico: '⚙' },
@@ -25,6 +26,16 @@ export default function OrgLayout({ children, params }) {
   const { orgId } = use(params);
   const path = usePathname();
   const org = useApi(() => api(`/orgs/${orgId}`), [orgId]);
+  // Unread notification count, refreshed every minute and after "mark all read".
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    const load = () => api(`/orgs/${orgId}/notifications`, { query: { unread: 1, limit: 1 } }).then((r) => alive && setUnread(r.unread)).catch(() => {});
+    load();
+    const t = setInterval(load, 60_000);
+    window.addEventListener('notifications-changed', load);
+    return () => { alive = false; clearInterval(t); window.removeEventListener('notifications-changed', load); };
+  }, [orgId, path]);
   if (org.loading && !org.data) return <Loading />;
   if (org.error) return <div className="auth-box"><ErrorNote error={org.error} /><Link href="/orgs">Back to your businesses</Link></div>;
   const base = `/o/${orgId}`;
@@ -42,14 +53,16 @@ export default function OrgLayout({ children, params }) {
           <Link className="org-switch" href="/orgs">{o.name}<small>{ROLE_LABEL[o.role]} · switch</small></Link>
           <nav className="nav" aria-label="Main">
             {NAV.filter((n) => !n.perm || can(n.perm)).map((n, i) => n.sep ? <div key={i} className="nav-sep" /> : (
-              <Link key={n.href} href={n.external ? n.href : base + n.href} className={!n.external && isActive(n) ? 'active' : ''}>{n.ico} {n.label}</Link>
+              <Link key={n.href} href={n.external ? n.href : base + n.href} className={!n.external && isActive(n) ? 'active' : ''}>{n.ico} {n.label}
+                {n.badge && unread > 0 && <span className="badge" style={{ marginLeft: 'auto' }}>{unread}</span>}</Link>
             ))}
           </nav>
         </aside>
         <main className="main">
           <div className="mobile-top no-print">
             <Link className="brand" href="/orgs"><span className="brand-mark">₹</span><span style={{ maxWidth: '55vw', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</span></Link>
-            <div className="row"><Link className="btn btn-sm" href={`${base}/ledgers`}>Ledgers</Link><Link className="btn btn-sm" href={`${base}/settings`}>⚙</Link></div>
+            <div className="row"><Link className="btn btn-sm" href={`${base}/notifications`} aria-label={`Notifications, ${unread} unread`}>🔔{unread > 0 ? ` ${unread}` : ''}</Link>
+              <Link className="btn btn-sm" href={`${base}/ledgers`}>Ledgers</Link><Link className="btn btn-sm" href={`${base}/settings`}>⚙</Link></div>
           </div>
           {children}
         </main>

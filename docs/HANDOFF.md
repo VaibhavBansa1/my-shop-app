@@ -18,8 +18,10 @@ This file lets anyone (you on your PC, or a new Claude session) continue the wor
 - Field rules decided and enforced (docs/FIELDS.md); glossary (docs/GLOSSARY.md); both shown in-app at /help.
 - Scale tested: 200 businesses + one with 30,000 vouchers, all reports < 0.5 s (docs/PERFORMANCE.md).
 - JSON backup export per business (Settings → Download backup).
+- Notifications (cancelled bills, low stock, new members, daily summary via `npm run notify:daily`) and
+  payment reminders by WhatsApp/SMS/email with UPI ID — docs/NOTIFICATIONS.md. Camera permission verified.
 - Password reset by email (Resend via env, dev logs the link); `npm run db:cleanup` for a daily cron.
-- Tests: `npm test` (53, incl. role x endpoint matrix, OCR on a real image, AI with a fake model server, real SMTP delivery), `npm run smoke` (27 HTTP checks incl. the mobile flow).
+- Tests: `npm test` (58, incl. notifications and reminders, role x endpoint matrix, OCR on a real image, AI with a fake model server, real SMTP delivery), `npm run smoke` (27 HTTP checks incl. the mobile flow).
 
 **Android app (`mobile/`)**
 - Expo SDK 58 app: sign in/up (+ forgot password), businesses, home, sell with exact GST preview, correct a bill, add stock items, vouchers with PDF share and
