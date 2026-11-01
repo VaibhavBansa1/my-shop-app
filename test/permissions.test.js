@@ -49,6 +49,7 @@ test('every role can do exactly what its permissions allow', async () => {
   const ledgers = await m.listLedgers(owner.db);
   const L = (c) => ledgers.find((l) => l.code === c).id;
   const today = new Date().toISOString().slice(0, 10);
+  const CUST = (await m.createLedger(owner.db, { name: 'Matrix Customer', groupId: g('sundry_debtors') })).id;
 
   let n = 0;
   const uniq = () => `${Date.now()}-${n++}`;
@@ -74,6 +75,10 @@ test('every role can do exactly what its permissions allow', async () => {
     ['reports', 'reports/[report]', 'GET', 'viewer', { report: 'profit-loss' }],
     ['audit log', 'audit', 'GET', 'admin', {}],
     ['backup export', 'export', 'GET', 'admin', {}],
+    ['my notifications', 'notifications', 'GET', 'viewer', {}],
+    ['mark notifications read', 'notifications/read', 'POST', 'viewer', {}, () => ({ all: true })],
+    ['notification settings', 'notification-settings', 'PATCH', 'viewer', {}, () => ({ notifyEmail: false })],
+    ['prepare reminder', 'reminders/[ledgerId]', 'GET', 'cashier', { ledgerId: CUST }],
     ['scan text', 'ocr/parse', 'POST', 'accountant', {}, () => ({ text: 'Invoice No 1\nTotal 10' })],
   ];
 

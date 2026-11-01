@@ -57,3 +57,16 @@ test('financial year and numbering', () => {
   assert.equal(fyStart('2026-06-01', 1), '2026-01-01');
   assert.equal(voucherNumberLabel('sales', '2026-04-01', 7), 'INV/26-27/7');
 });
+
+test('phone normalisation and message links', async () => {
+  const { normalizePhone, whatsappUrl, invoiceMessage, paymentReminder } = await import('../shared/messages.js');
+  assert.equal(normalizePhone('98765 43210'), '919876543210');
+  assert.equal(normalizePhone('+91-98765-43210'), '919876543210');
+  assert.equal(normalizePhone('09876543210'), '919876543210');
+  assert.equal(normalizePhone('+44 20 7946 0958'), '442079460958');
+  assert.equal(normalizePhone('12345'), null);
+  assert.equal(normalizePhone(''), null);
+  assert.equal(whatsappUrl('91999', 'a&b c'), 'https://wa.me/91999?text=a%26b%20c');
+  assert.match(invoiceMessage({ shopName: 'S', label: 'INV/1', date: '1 Nov', total: 12, items: [{ name: 'X', qty: 1, taxableValue: 12 }] }), /Total: ₹12\.00/);
+  assert.match(paymentReminder({ language: 'hinglish', shopName: 'S', customerName: 'R', amount: 5 }), /baaki ₹5\.00/);
+});

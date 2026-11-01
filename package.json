@@ -15,7 +15,8 @@
     "test": "node --test --test-concurrency=1 \"test/**/*.test.js\"",
     "db:setup": "bash scripts/db-setup.sh",
     "smoke": "node scripts/smoke.mjs",
-    "db:cleanup": "node scripts/cleanup.mjs"
+    "db:cleanup": "node scripts/cleanup.mjs",
+    "notify:daily": "node scripts/daily-summary.mjs"
   },
   "dependencies": {
     "@tesseract.js-data/eng": "^1.0.0",

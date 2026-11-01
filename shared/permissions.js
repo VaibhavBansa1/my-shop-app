@@ -9,6 +9,8 @@ const MIN_ROLE = {
   'masters.read': 'viewer',
   'vouchers.read': 'viewer',
   'party.create': 'cashier',
+  'reminders.send': 'cashier',
+  'notifications.read': 'viewer',
   'voucher.create.sales': 'cashier',
   'voucher.create.receipt': 'cashier',
   'voucher.create.purchase': 'accountant',
