@@ -28,3 +28,25 @@ export async function api(path, { method = 'GET', body, query } = {}) {
   if (!res.ok) throw new ApiError(res.status, data);
   return data;
 }
+
+/** Upload a Blob as the raw request body (used for invoice photos). */
+export async function apiUpload(path, blob) {
+  const res = await fetch(`/api/v1${path}`, {
+    method: 'POST', credentials: 'same-origin', headers: { 'content-type': blob.type || 'image/jpeg' }, body: blob,
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new ApiError(res.status, data);
+  return data;
+}
+
+/** Downscale a photo in the browser to at most `max` px on the long side, as JPEG. */
+export async function shrinkImage(file, max = 2000, quality = 0.85) {
+  const bmp = await createImageBitmap(file);
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bmp.width * scale);
+  canvas.height = Math.round(bmp.height * scale);
+  canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  bmp.close?.();
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not read the image.'))), 'image/jpeg', quality));
+}

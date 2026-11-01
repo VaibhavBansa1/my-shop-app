@@ -52,6 +52,7 @@ test('parses a typical intra-state GST invoice (with OCR noise in the GSTIN)', (
   const r = parseInvoiceText(intraInvoice, { ownGstin: OWN });
   assert.equal(r.supplierGstin, SUPPLIER);
   assert.deepEqual(r.gstins.sort(), [OWN, SUPPLIER].sort());
+  assert.equal(r.supplierName, 'ANNAPURNA WHOLESALE TRADERS');
   assert.equal(r.invoiceNumber, 'AW/2026/0457');
   assert.equal(r.invoiceDate, '2026-11-03');
   assert.equal(r.totals.taxable, 9805);
@@ -77,6 +78,11 @@ test('inter-state invoice with IGST and a mismatch warning', () => {
   assert.equal(r.items[0].hsn, '8539');
   assert.ok(r.warnings.some((w) => /total/i.test(w)), 'taxable + tax (6490) != total (6600) must be flagged');
   assert.ok(r.warnings.some((w) => /Your GSTIN/.test(w)));
+});
+
+test('OCR noise before item names is dropped', () => {
+  const r = parseInvoiceText('§ Basmati Rice 5kg 1006 10 420.00 4200.00');
+  assert.equal(r.items[0].description, 'Basmati Rice 5kg');
 });
 
 test('garbage, empty and hostile input never throws', () => {

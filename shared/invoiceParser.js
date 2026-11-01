@@ -79,6 +79,14 @@ export function parseInvoiceText(text, { ownGstin = null } = {}) {
   const supplierGstin = gstins.find((g) => g !== own) ?? null;
   if (own && gstins.length && !gstins.includes(own)) warnings.push('Your GSTIN was not found on this invoice. Check it is billed to you.');
 
+  // Supplier name guess: first line with letters that is not a document title/label, above the first GSTIN.
+  let supplierName = null;
+  for (const l of lines.slice(0, 8)) {
+    if (/gstin|invoice|bill\s*to|tax|original|duplicate|cash\s*memo|estimate|phone|mob|email|@/i.test(l)) { if (/gstin/i.test(l)) break; continue; }
+    const letters = l.replace(/[^A-Za-z]/g, '');
+    if (letters.length >= 3 && letters.length / l.length > 0.5) { supplierName = l.replace(/[^\w&.,'()\- ]/g, '').trim().slice(0, 120); break; }
+  }
+
   // Invoice number
   let invoiceNumber = null;
   for (const l of lines) {
@@ -136,7 +144,7 @@ export function parseInvoiceText(text, { ownGstin = null } = {}) {
     // Description = words before the first purely numeric token, after dropping a leading serial no.
     const words = l.replace(/^\s*\d{1,3}[.)]?\s+/, '').split(' ');
     const stop = words.findIndex((w) => /^[₹]?[\d,]+(\.\d+)?%?\/?-?$/.test(w));
-    let description = (stop === -1 ? words : words.slice(0, stop)).join(' ').replace(/[|:]+/g, ' ').trim();
+    let description = (stop === -1 ? words : words.slice(0, stop)).join(' ').replace(/[|:]+/g, ' ').replace(/^[^A-Za-z0-9]+/, '').trim();
     if (description.length < 2) continue;
     items.push({ description: description.slice(0, 120), hsn: hsnMatch ? hsnMatch[1] : null, qty: found.qty, rate: round2(found.rate),
       amount: round2(found.amount), discount: round2(Math.max(found.qty * found.rate - found.amount, 0)), gstRate });
@@ -160,7 +168,7 @@ export function parseInvoiceText(text, { ownGstin = null } = {}) {
 
   const filled = [supplierGstin, invoiceNumber, invoiceDate, totals.total, items.length ? 1 : null].filter((x) => x != null).length;
   return {
-    supplierGstin, gstins, invoiceNumber, invoiceDate,
+    supplierGstin, supplierName, gstins, invoiceNumber, invoiceDate,
     interState: totals.igst != null && totals.igst > 0 ? true : (totals.cgst != null || totals.sgst != null ? false : null),
     totals, items: items.slice(0, 100), warnings, confidence: round2(filled / 5),
   };

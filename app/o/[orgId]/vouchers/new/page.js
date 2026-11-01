@@ -7,6 +7,7 @@ import { useApi, Field, ErrorNote, Loading, PageHead } from '../../../../ui/comp
 import { useOrg } from '../../../../ui/OrgContext.js';
 import { money, today, VOUCHER_TYPES } from '../../../../ui/format.js';
 import { STATE_LIST } from '../../../../ui/states.js';
+import ScanInvoice from '../../../../ui/ScanInvoice.js';
 
 const ITEM_TYPES = ['sales', 'purchase', 'credit_note', 'debit_note'];
 const CASH_BANK = ['cash_in_hand', 'bank_accounts', 'bank_od'];
@@ -28,8 +29,8 @@ function VoucherForm() {
   const type = allowed.includes(sp.get('type')) ? sp.get('type') : allowed[0];
   const isItem = ITEM_TYPES.includes(type);
   const masters = useApi(async () => {
-    const [l, i] = await Promise.all([api(`/orgs/${org.id}/ledgers`), api(`/orgs/${org.id}/items`)]);
-    return { ledgers: l.ledgers.filter((x) => x.isActive), items: i.items.filter((x) => x.isActive) };
+    const [l, i, u] = await Promise.all([api(`/orgs/${org.id}/ledgers`), api(`/orgs/${org.id}/items`), api(`/orgs/${org.id}/units`)]);
+    return { ledgers: l.ledgers.filter((x) => x.isActive), items: i.items.filter((x) => x.isActive), units: u.units };
   }, [org.id]);
 
   const [head, setHead] = useState({ date: today(), partyLedgerId: '', placeOfSupply: '', reference: '', narration: '' });
@@ -104,6 +105,14 @@ function VoucherForm() {
         {allowed.map((t) => <Link key={t} className={`chip ${t === type ? 'active' : ''}`} href={`${base}/vouchers/new?type=${t}`} replace>{VOUCHER_TYPES[t]}</Link>)}
       </div>
       <ErrorNote error={masters.error || error} />
+      {type === 'purchase' && can('voucher.create.purchase') && (
+        <ScanInvoice orgId={org.id} units={masters.data?.units ?? []} items={masters.data?.items ?? []} ledgers={ledgers}
+          onApply={(d) => {
+            setHead({ ...head, partyLedgerId: d.partyLedgerId, reference: d.reference, narration: d.narration, date: d.date || head.date });
+            if (d.items.length) setItems(d.items);
+            masters.reload();
+          }} />
+      )}
       <div className="card grid grid-3">
         <Field label="Date"><input type="date" required value={head.date} onChange={(e) => setHead({ ...head, date: e.target.value })} /></Field>
         {isItem && (
