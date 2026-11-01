@@ -16,7 +16,8 @@
     "db:setup": "bash scripts/db-setup.sh",
     "smoke": "node scripts/smoke.mjs",
     "db:cleanup": "node scripts/cleanup.mjs",
-    "notify:daily": "node scripts/daily-summary.mjs"
+    "notify:daily": "node scripts/daily-summary.mjs",
+    "db:encrypt-existing": "node scripts/encrypt-existing.mjs"
   },
   "dependencies": {
     "@tesseract.js-data/eng": "^1.0.0",

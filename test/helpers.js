@@ -3,6 +3,9 @@
 import { execFileSync } from 'node:child_process';
 import pg from 'pg';
 
+// Tests always run with field encryption on (a fixed test-only key).
+process.env.DATA_ENCRYPTION_KEY ??= Buffer.alloc(32, 7).toString('base64');
+
 export const OWNER_URL = process.env.TEST_DATABASE_OWNER_URL || 'postgres://shop_owner:shop_owner_dev@localhost:5432/shop_test';
 export const APP_URL = process.env.TEST_DATABASE_URL || 'postgres://shop_app:shop_app_dev@localhost:5432/shop_test';
 
