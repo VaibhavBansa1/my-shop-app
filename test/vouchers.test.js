@@ -183,3 +183,24 @@ test('correcting a voucher posts the new one and cancels the original atomically
   const book = await before(db, { from: '2026-05-10', to: '2026-05-10' });
   assert.equal(book.vouchers.filter((v) => v.type === 'purchase').length, 0, 'no stray purchase from the failed correction');
 });
+
+test('numbering stays gap-free and unique under concurrent saves', async () => {
+  const { createVoucher } = await import('../lib/services/vouchers.js');
+  const { db } = await makeUserOrg();
+  const f = await fixtures(db);
+  const made = await Promise.all(Array.from({ length: 20 }, () => createVoucher(db, { ...base, type: 'sales', date: '2026-06-01',
+    items: [{ stockItemId: f.sugar.id, qty: 1, rate: 48 }] })));
+  const nums = made.map((v) => v.number).sort((a, b) => a - b);
+  assert.deepEqual(nums, Array.from({ length: 20 }, (_, i) => i + 1));
+});
+
+test('books start date cannot move past existing vouchers', async () => {
+  const { createVoucher } = await import('../lib/services/vouchers.js');
+  const { updateOrg } = await import('../lib/services/orgs.js');
+  const { db } = await makeUserOrg();
+  const f = await fixtures(db);
+  await createVoucher(db, { ...base, type: 'sales', date: '2026-05-01', items: [{ stockItemId: f.sugar.id, qty: 1, rate: 48 }] });
+  await assert.rejects(updateOrg(db, { booksFrom: '2026-06-01' }), /cannot start after/);
+  const o = await updateOrg(db, { booksFrom: '2026-04-15' });
+  assert.equal(o.booksFrom, '2026-04-15');
+});
