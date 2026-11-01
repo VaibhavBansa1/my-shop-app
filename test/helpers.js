@@ -34,7 +34,7 @@ export async function makeUserOrg(overrides = {}) {
   const { createOrg } = await import('../lib/services/orgs.js');
   const { user } = await signup({ name: 'Test User', email: uniqueEmail(), password: 'correct horse battery' }, { ip: `t${n++}` });
   const org = await createOrg(user.id, {
-    name: `Shop ${n++}`, legalName: '', gstin: '23ABCDE1234F1Z5', stateCode: '23', country: 'IN', currency: 'INR',
+    name: `Shop ${n++}`, legalName: '', gstin: '23ABCDE1234F1Z8', stateCode: '23', country: 'IN', currency: 'INR',
     address: '', phone: '', email: '', fyStartMonth: 4, booksFrom: '2026-04-01', ...overrides,
   });
   return { user, org, db: { userId: user.id, orgId: org.id } };

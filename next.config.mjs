@@ -12,6 +12,8 @@ const securityHeaders = [
 
 export default {
   poweredByHeader: false,
+  // Tesseract spawns worker threads and loads files at runtime; keep it out of the bundle.
+  serverExternalPackages: ['tesseract.js', '@tesseract.js-data/eng'],
   reactStrictMode: true,
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
