@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { setupDb, closePool, uniqueEmail, ownerQuery } from './helpers.js';
 
 process.env.EMAIL_CAPTURE = '1';
+process.env.EMAIL_VERIFICATION = 'off';
 before(setupDb);
 after(closePool);
 
@@ -17,11 +18,14 @@ test('reset: unknown email looks the same, token works once, sessions are revoke
   const email = uniqueEmail('reset');
   const { session } = await A.signup({ name: 'Rita', email, password: 'original password 1' }, { ip: 'r1' });
 
+  await new Promise((r) => setTimeout(r, 50)); // let the async welcome email land
+  takeSentEmails();
   await R.requestReset(uniqueEmail('nobody'), { origin: 'https://shop.example' });
   assert.equal(takeSentEmails().length, 0, 'no email for unknown address (and no error)');
 
+  takeSentEmails();
   await R.requestReset(email, { origin: 'https://shop.example' });
-  const [mail] = takeSentEmails();
+  const [mail] = takeSentEmails().filter((m) => /Reset/.test(m.subject));
   assert.equal(mail.to, email);
   assert.ok(mail.text.includes('https://shop.example/reset#'));
   const token = linkToken(mail.text);
@@ -43,8 +47,9 @@ test('reset: expired links fail; requests are rate limited per email', async () 
   takeSentEmails();
   const email = uniqueEmail('reset2');
   await A.signup({ name: 'Ravi', email, password: 'original password 1' }, { ip: 'r2' });
+  takeSentEmails();
   await R.requestReset(email, { origin: 'https://s' });
-  const token = linkToken(takeSentEmails()[0].text);
+  const token = linkToken(takeSentEmails().find((m) => /Reset/.test(m.subject)).text);
   await ownerQuery("update password_resets set expires_at = now() - interval '1 minute'");
   await assert.rejects(R.confirmReset(token, 'brand new password 2'), /expired/);
   await R.requestReset(email, { origin: 'https://s' });
