@@ -20,5 +20,6 @@ export const GET = route(async ({ request, db }) => {
 export const POST = route(async ({ request, db, role }) => {
   const body = voucherSchema.parse(await readJson(request));
   if (!can(role, `voucher.create.${body.type}`)) throw forbidden(`Your role cannot create ${body.type.replace('_', ' ')} vouchers.`);
+  if (body.replacesVoucherId && !can(role, 'voucher.cancel')) throw forbidden('Your role cannot correct (cancel) vouchers.');
   return json(await createVoucher(db, body), 201);
 }, { action: 'vouchers.read' });

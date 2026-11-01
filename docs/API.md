@@ -70,6 +70,10 @@ Accounting voucher (receipt, payment, contra, journal):
 { "type": "receipt", "date": "2026-11-01",
   "entries": [ { "ledgerId": "<cash>", "debit": "500" }, { "ledgerId": "<customer>", "credit": "500" } ] }
 ```
+**Correcting a voucher:** add `"replacesVoucherId": "<id>"` (same type, must be posted; needs the
+`voucher.cancel` permission). The new voucher is posted and the original is cancelled with the reason
+"Corrected: replaced by …" in one transaction.
+
 Debits must equal credits. Receipts must debit cash/bank; payments must credit cash/bank;
 contra only between cash/bank ledgers.
 

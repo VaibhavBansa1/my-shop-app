@@ -162,3 +162,24 @@ test('balance sheet shows difference when opening balances do not tie', async ()
   assert.equal(bs.totalAssets, bs.totalLiabilities);
   assert.equal(bs.liabilities.find((s) => s.group.startsWith('Difference')).amount, 1000);
 });
+
+test('correcting a voucher posts the new one and cancels the original atomically', async () => {
+  const { createVoucher, getVoucher } = await import('../lib/services/vouchers.js');
+  const { db } = await makeUserOrg();
+  const f = await fixtures(db);
+  const orig = await createVoucher(db, { ...base, type: 'sales', date: '2026-05-10', items: [{ stockItemId: f.rice.id, qty: 5, rate: 510 }] });
+  const fixed = await createVoucher(db, { ...base, type: 'sales', date: '2026-05-10', replacesVoucherId: orig.id,
+    items: [{ stockItemId: f.rice.id, qty: 3, rate: 510 }] });
+  const old = await getVoucher(db, orig.id);
+  assert.equal(old.status, 'cancelled');
+  assert.equal(old.cancelReason, `Corrected: replaced by ${fixed.label}`);
+  // Cannot correct twice, cannot change type, and a failed correction leaves the original untouched.
+  await assert.rejects(createVoucher(db, { ...base, type: 'sales', date: '2026-05-10', replacesVoucherId: orig.id,
+    items: [{ stockItemId: f.rice.id, qty: 1, rate: 1 }] }), /already cancelled/);
+  const before = (await import('../lib/services/reports.js')).dayBook;
+  await assert.rejects(createVoucher(db, { ...base, type: 'purchase', date: '2026-05-10', replacesVoucherId: fixed.id,
+    items: [{ stockItemId: f.rice.id, qty: 1, rate: 1 }] }), /same voucher type/);
+  assert.equal((await getVoucher(db, fixed.id)).status, 'posted', 'failed correction rolled back');
+  const book = await before(db, { from: '2026-05-10', to: '2026-05-10' });
+  assert.equal(book.vouchers.filter((v) => v.type === 'purchase').length, 0, 'no stray purchase from the failed correction');
+});

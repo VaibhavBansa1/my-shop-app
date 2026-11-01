@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { api } from '../../lib/api.js';
@@ -57,6 +57,9 @@ export default function VoucherView() {
           {d.narration ? <T muted style={{ marginTop: 8 }}>{d.narration}</T> : null}
         </Card>
         <Button title="Share / print PDF" onPress={share} busy={busy} style={{ marginBottom: 10 }} />
+        {d.status === 'posted' && d.type === 'sales' && s.can('voucher.cancel') && !cancelling && (
+          <Button kind="secondary" title="Correct this bill" onPress={() => router.push({ pathname: '/sell', params: { from: d.id } })} style={{ marginBottom: 10 }} />
+        )}
         {d.status === 'posted' && s.can('voucher.cancel') && !cancelling && <Button kind="danger" title="Cancel this voucher" onPress={() => setCancelling(true)} />}
         {cancelling && (
           <Card>

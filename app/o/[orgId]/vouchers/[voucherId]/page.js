@@ -32,6 +32,7 @@ export default function VoucherView({ params }) {
         <Link className="btn btn-sm" href={`${base}/vouchers`}>← Vouchers</Link>
         <span className="spacer" />
         <button className="btn btn-sm" onClick={() => window.print()}>Print / PDF</button>
+        {d.status === 'posted' && can('voucher.cancel') && can(`voucher.create.${d.type}`) && <Link className="btn btn-sm" href={`${base}/vouchers/new?type=${d.type}&from=${d.id}`}>Correct…</Link>}
         {d.status === 'posted' && can('voucher.cancel') && <button className="btn btn-sm btn-danger" onClick={() => setCancelling(true)}>Cancel voucher</button>}
       </div>
       {d.status === 'cancelled' && <div className="note note-error">Cancelled{d.cancelReason ? `: ${d.cancelReason}` : ''}. It no longer counts in any report.</div>}

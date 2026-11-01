@@ -1,13 +1,13 @@
 // New sale (also used for purchase via ?type=purchase from the scan screen's "edit" path).
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { computeInvoice } from '../../../../shared/gst.js';
 import { toMilli, toPaise } from '../../../../shared/money.js';
 import { api } from '../../lib/api.js';
 import { useLoad, useSession } from '../../lib/session.js';
 import { money, today } from '../../lib/format.js';
-import { Button, Card, ErrorNote, Field, Loading, Picker, Screen, T, Totals, useTheme } from '../../components/ui.js';
+import { Button, Card, ErrorNote, Field, Loading, Note, Picker, Screen, T, Totals, useTheme } from '../../components/ui.js';
 
 const blankLine = () => ({ stockItemId: null, qty: '1', rate: '', discount: '' });
 
@@ -35,6 +35,18 @@ export default function Sell() {
   const [lines, setLines] = useState([blankLine()]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  // Correction mode (?from=<voucherId>): prefill; saving cancels the original in the same transaction.
+  const { from } = useLocalSearchParams();
+  const [original, setOriginal] = useState(null);
+  useEffect(() => {
+    if (!from) { setOriginal(null); return; }
+    api.get(`/orgs/${org.id}/vouchers/${from}`).then((v) => {
+      if (v.type !== 'sales' || v.status !== 'posted') return;
+      setOriginal(v);
+      setParty(v.partyName === 'Cash' ? null : v.partyLedgerId);
+      setLines(v.items.map((i) => ({ stockItemId: i.stockItemId, qty: String(i.qty), rate: String(i.rate), discount: i.discount ? String(i.discount) : '' })));
+    }).catch(setError);
+  }, [from, org.id]);
 
   const itemMap = useMemo(() => new Map((masters.data?.items ?? []).map((i) => [i.id, i])), [masters.data]);
   const customer = masters.data?.customers.find((c) => c.id === party);
@@ -54,10 +66,11 @@ export default function Sell() {
     setBusy(true); setError(null);
     try {
       const v = await api.post(`/orgs/${org.id}/vouchers`, {
-        type: 'sales', date: today(), partyLedgerId: party,
+        type: 'sales', date: original?.date ?? today(), partyLedgerId: party, ...(original ? { replacesVoucherId: original.id } : {}),
         items: lines.filter((l) => l.stockItemId).map((l) => ({ stockItemId: l.stockItemId, qty: l.qty, rate: l.rate || '0', discount: l.discount || '0' })),
       });
-      setLines([blankLine()]); setParty(null); setBusy(false);
+      setLines([blankLine()]); setParty(null); setOriginal(null); setBusy(false);
+      router.setParams({ from: undefined });
       router.push(`/voucher/${v.id}`);
     } catch (e) { setError(e); setBusy(false); }
   }
@@ -68,6 +81,7 @@ export default function Sell() {
     <Screen>
       <ScrollView contentContainerStyle={{ padding: 14 }} keyboardShouldPersistTaps="handled">
         <ErrorNote error={error} />
+        {original && <Note kind="warn">Correcting {original.label}. Saving creates a new bill and cancels the original (kept on record as replaced).</Note>}
         {masters.data.items.length === 0 && <T muted style={{ marginBottom: 10 }}>No stock items yet. Add items on the website (Stock) first.</T>}
         <Card>
           <Picker label="Customer" value={party} onChange={setParty} placeholder="Cash sale" allowClear

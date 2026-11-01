@@ -27,25 +27,30 @@ These need your judgement; the code works either way.
 5. New sale to a customer from another state → IGST only.
 6. Receipt from that customer → Reports → Receivables drops by that amount.
 7. Payment for rent → Profit & Loss shows Rent under indirect expenses.
-8. Cancel a voucher with a reason → it disappears from reports, still visible (struck out) in the list.
-9. **Scan invoice:** New purchase → Scan invoice → photograph a real supplier bill.
+8. Open a sale → **Correct…** → change a quantity → save → the old bill shows Cancelled ("replaced by …"),
+   stock and reports reflect only the new one.
+9. Cancel a voucher with a reason → it disappears from reports, still visible (struck out) in the list.
+10. **Scan invoice:** New purchase → Scan invoice → photograph a real supplier bill.
    Check supplier, invoice no., date, items, totals; create the supplier; save; compare with the paper bill.
-10. Team → invite a second email as **Cashier** → open the link in another browser → sign up with that
+11. Team → invite a second email as **Cashier** → open the link in another browser → sign up with that
     email → confirm the cashier cannot see Purchase, cannot cancel, cannot see Team.
-11. Try opening the first business's URL while signed in as a user who is not a member → "not found".
-12. Phone browser: everything usable, bottom tab bar, no sideways scrolling, dark mode readable.
+12. Try opening the first business's URL while signed in as a user who is not a member → "not found".
+13. Forgot password → with no email provider configured the link appears in the server log (dev);
+    in production set RESEND_API_KEY/EMAIL_FROM.
+14. Phone browser: everything usable, bottom tab bar, no sideways scrolling, dark mode readable.
 
 ## Android app
 1. Build: `cd mobile && npx expo run:android` (or EAS preview APK). Set Server to your PC's address.
 2. Sign in with the website account → pick the business → Home numbers match the website.
 3. Sell → cash bill with 2 items → total matches what the website shows for the same items → Share PDF
    to WhatsApp → the PDF opens and looks right.
-4. Receive money / Pay expense → appear in Vouchers and on the website.
-5. Scan purchase invoice → **Read on phone** (development build) and **Read on server** → both give a
+4. Open that bill → **Correct this bill** → change quantity → save → the original shows cancelled.
+5. Receive money / Pay expense → appear in Vouchers and on the website.
+6. Scan purchase invoice → **Read on phone** (development build) and **Read on server** → both give a
    sensible draft → save → compare with the paper bill.
-6. Turn on airplane mode → actions show a clear "could not reach the server" message, no crash.
-7. Sign out → reopen app → asks to sign in. Sign in as the cashier → no purchase/scan options.
-8. Rotate/large font sizes (Android accessibility settings) → text still fits.
+7. Turn on airplane mode → actions show a clear "could not reach the server" message, no crash.
+8. Sign out → reopen app → asks to sign in. Sign in as the cashier → no purchase/scan options.
+9. Rotate/large font sizes (Android accessibility settings) → text still fits.
 
 ## Notes / problems found
 (write here)

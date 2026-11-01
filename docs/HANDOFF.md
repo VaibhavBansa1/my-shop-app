@@ -11,8 +11,9 @@ This file lets anyone (you on your PC, or a new Claude session) continue the wor
 - REST API v1 for web and mobile; nonce CSP, CSRF origin checks, rate limits.
 - Invoice scanning: `POST /ocr/invoice` (photo) and `/ocr/parse` (text), shared parser, review UI on
   the New Purchase page.
+- Correct a voucher (web: all types; app: sales bills) — new voucher + cancel original in one transaction.
 - Password reset by email (Resend via env, dev logs the link); `npm run db:cleanup` for a daily cron.
-- Tests: `npm test` (35 incl. OCR on a real image), `npm run smoke` (27 HTTP checks incl. the mobile flow).
+- Tests: `npm test` (36 incl. OCR on a real image), `npm run smoke` (27 HTTP checks incl. the mobile flow).
 
 **Android app (`mobile/`)**
 - Expo SDK 58 app: sign in/up, businesses, home, sell with exact GST preview, vouchers with PDF share and
@@ -35,7 +36,6 @@ To keep going with Claude Code locally: *"Read docs/HANDOFF.md and continue with
 ## Backlog (suggested order)
 1. Owner decisions in docs/MANUAL_TESTING.md (package id, server URL, open sign-up, legal pages).
 2. Email verification for new accounts (password reset is done; set RESEND_API_KEY/EMAIL_FROM in production).
-3. "Edit" = cancel and copy into a new voucher (web + app).
 4. Mobile: add/edit stock items, date picker, offline queue for sales.
 5. Exports: CSV/Excel for reports, JSON backup per business, Tally XML.
 6. GST e-invoice (IRN/QR) and e-way bill.

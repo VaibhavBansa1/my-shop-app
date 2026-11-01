@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState, Suspense } from 'react';
+import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '../../../../ui/api.js';
@@ -38,6 +38,24 @@ function VoucherForm() {
   const [simple, setSimple] = useState({ partyLedgerId: '', cashBankLedgerId: '', amount: '' });
   const [entries, setEntries] = useState([{ ledgerId: '', side: 'debit', amount: '' }, { ledgerId: '', side: 'credit', amount: '' }]);
   const [mode, setMode] = useState('simple');
+  // Correction mode: ?from=<voucherId> pre-fills this form; saving cancels the original atomically.
+  const fromId = sp.get('from');
+  const [original, setOriginal] = useState(null);
+  useEffect(() => {
+    if (!fromId) return;
+    api(`/orgs/${org.id}/vouchers/${fromId}`).then((v) => {
+      if (v.type !== type || v.status !== 'posted') return;
+      setOriginal(v);
+      setHead({ date: v.date, partyLedgerId: v.partyLedgerId && v.items.length ? v.partyLedgerId : '', placeOfSupply: v.placeOfSupply ?? '',
+        reference: v.reference, narration: v.narration });
+      if (v.items.length) {
+        setItems(v.items.map((i) => ({ stockItemId: i.stockItemId, qty: String(i.qty), rate: String(i.rate), discount: i.discount ? String(i.discount) : '', gstRate: String(i.gstRate) })));
+      } else {
+        setMode('advanced');
+        setEntries(v.entries.map((e) => ({ ledgerId: e.ledgerId, side: e.debit ? 'debit' : 'credit', amount: String(e.debit || e.credit) })));
+      }
+    }).catch(setError);
+  }, [fromId, org.id, type]);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -71,7 +89,7 @@ function VoucherForm() {
 
   async function submit(e) {
     e.preventDefault(); setBusy(true); setError(null);
-    const body = { type, date: head.date, reference: head.reference, narration: head.narration };
+    const body = { type, date: head.date, reference: head.reference, narration: head.narration, ...(original ? { replacesVoucherId: original.id } : {}) };
     if (isItem) {
       body.partyLedgerId = head.partyLedgerId || null;
       if (head.placeOfSupply) body.placeOfSupply = head.placeOfSupply;
@@ -100,7 +118,8 @@ function VoucherForm() {
 
   return (
     <form onSubmit={submit}>
-      <PageHead title={`New ${VOUCHER_TYPES[type]}`} />
+      <PageHead title={original ? `Correct ${original.label}` : `New ${VOUCHER_TYPES[type]}`} />
+      {original && <div className="note note-warn">You are correcting <b>{original.label}</b>. Saving creates a new voucher and cancels the original (it stays on record, marked as replaced).</div>}
       <div className="chips">
         {allowed.map((t) => <Link key={t} className={`chip ${t === type ? 'active' : ''}`} href={`${base}/vouchers/new?type=${t}`} replace>{VOUCHER_TYPES[t]}</Link>)}
       </div>
