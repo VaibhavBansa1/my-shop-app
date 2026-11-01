@@ -68,11 +68,42 @@ check(r.status === 401 || r.status === 200, 'forged cookie is not accepted as an
 const native = client();
 const nEmail = email('native');
 await native('/api/v1/auth/signup', { method: 'POST', body: { name: 'Native', email: nEmail, password: pw } });
+const nsign = await fetch(`${BASE}/api/v1/auth/signup`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: 'N2', email: email('native2'), password: pw, returnToken: true }) });
+const nsBody = await nsign.json();
+check(nsign.status === 201 && nsBody.token && !nsign.headers.get('set-cookie'), 'native signup returns a token and sets no cookie');
 const login = await fetch(`${BASE}/api/v1/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: nEmail, password: pw, returnToken: true }) }).then((x) => x.json());
 const me = await fetch(`${BASE}/api/v1/me`, { headers: { authorization: `Bearer ${login.token}` } });
 check(me.status === 200, 'bearer token works for native clients');
 const noOrigin = await fetch(`${BASE}/api/v1/orgs`, { method: 'POST', headers: { authorization: `Bearer ${login.token}`, 'content-type': 'application/json' }, body: JSON.stringify({ name: 'Native Shop' }) });
 check(noOrigin.status === 201, 'bearer POST works without Origin header');
+
+// ---- The mobile app's flow: bearer token only, no cookies, no Origin ----
+const fs = await import('node:fs');
+const tokenSignup = await fetch(`${BASE}/api/v1/auth/signup`, { method: 'POST', headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ name: 'Phone User', email: email('phone'), password: pw, returnToken: true }) }).then((x) => x.json());
+const B = (path, init = {}) => fetch(BASE + path, { ...init, headers: { authorization: `Bearer ${tokenSignup.token}`, ...(init.body && typeof init.body === 'string' ? { 'content-type': 'application/json' } : {}), ...(init.headers || {}) } })
+  .then(async (x) => ({ status: x.status, data: await x.json().catch(() => null) }));
+let m = await B('/api/v1/orgs', { method: 'POST', body: JSON.stringify({ name: 'Phone Shop', gstin: '23ABCDE1234F1Z8', stateCode: '23' }) });
+check(m.status === 201, 'mobile: create business with bearer token');
+const morg = m.data.id;
+const units = (await B(`/api/v1/orgs/${morg}/units`)).data.units;
+m = await B(`/api/v1/orgs/${morg}/items`, { method: 'POST', body: JSON.stringify({ name: 'Basmati Rice 5kg', unitId: units.find((u) => u.symbol === 'pcs').id, hsnCode: '1006', gstRate: 5, salePrice: 510 }) });
+const mrice = m.data.id;
+m = await B(`/api/v1/orgs/${morg}/vouchers`, { method: 'POST', body: JSON.stringify({ type: 'sales', date: new Date().toISOString().slice(0, 10), items: [{ stockItemId: mrice, qty: '2', rate: '510', discount: '0' }] }) });
+check(m.status === 201 && m.data.total === 1071, 'mobile: cash sale');
+const ml = (await B(`/api/v1/orgs/${morg}/ledgers`)).data.ledgers;
+m = await B(`/api/v1/orgs/${morg}/vouchers`, { method: 'POST', body: JSON.stringify({ type: 'payment', date: new Date().toISOString().slice(0, 10),
+  entries: [{ ledgerId: ml.find((l) => l.code === 'rent').id, debit: '500' }, { ledgerId: ml.find((l) => l.code === 'cash').id, credit: '500' }] }) });
+check(m.status === 201, 'mobile: expense entry');
+m = await B(`/api/v1/orgs/${morg}/ocr/parse`, { method: 'POST', body: JSON.stringify({ text: 'GSTIN 23AAACR5055K1ZF\nInvoice No: X-9\nDate 03/11/2026\nBasmati Rice 5kg 1006 10 420.00 4200.00\nCGST 105.00\nSGST 105.00\nGrand Total 4410.00' }) });
+check(m.status === 200 && m.data.items[0]?.match?.stockItemId === mrice && m.data.totals.total === 4410, 'mobile: on-device OCR text parsed and matched');
+const img = fs.readFileSync(new URL('../test/fixtures/invoice-sample.png', import.meta.url));
+m = await B(`/api/v1/orgs/${morg}/ocr/invoice`, { method: 'POST', headers: { 'content-type': 'image/png' }, body: img });
+check(m.status === 200 && m.data.totals.total === 10295 && m.data.items.length === 3, 'mobile: server OCR of an uploaded photo');
+m = await B(`/api/v1/orgs/${morg}/ocr/invoice`, { method: 'POST', headers: { 'content-type': 'image/png' }, body: Buffer.from('not an image at all, just text pretending') });
+check(m.status === 400, 'mobile: non-image upload rejected');
+m = await B(`/api/v1/orgs/${org}/ocr/parse`, { method: 'POST', body: JSON.stringify({ text: 'x' }) });
+check(m.status === 404, "mobile: cannot use OCR against someone else's business");
 
 r = await owner('/api/v1/auth/logout', { method: 'POST' });
 r = await owner(`/api/v1/orgs/${org}`);
