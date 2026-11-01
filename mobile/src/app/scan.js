@@ -1,7 +1,7 @@
 // Scan a supplier invoice: camera/gallery → OCR (on-device first, server fallback) →
 // review every field → create missing supplier/items → save as a purchase voucher.
 import { useState } from 'react';
-import { Alert, Image, ScrollView, View } from 'react-native';
+import { Alert, Image, Linking, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { isValidGstin } from '../../../shared/gstin.js';
@@ -28,8 +28,18 @@ export default function Scan() {
 
   async function pick(fromCamera) {
     setError(null);
-    const perm = fromCamera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { setError(new Error(fromCamera ? 'Camera permission is needed to scan.' : 'Photo permission is needed.')); return; }
+    // Camera needs permission. Choosing a photo uses the system photo picker, which needs none
+    // (storage permissions are deliberately removed from the app for privacy).
+    if (fromCamera) {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!perm.granted) {
+        if (!perm.canAskAgain) {
+          Alert.alert('Camera permission is off', 'Allow camera access for My Shop in your phone settings to scan invoices.',
+            [{ text: 'Not now' }, { text: 'Open settings', onPress: () => Linking.openSettings() }]);
+        } else setError(new Error('Camera permission is needed to scan. You can also choose a photo instead.'));
+        return;
+      }
+    }
     const opts = { mediaTypes: ['images'], quality: 1, allowsEditing: true, exif: false };
     const res = fromCamera ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
     if (res.canceled || !res.assets?.[0]) return;

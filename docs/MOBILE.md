@@ -45,6 +45,17 @@ For Play Store: `--profile production` makes an `.aab`. Before that, set `extra.
 
 Or locally with Android Studio: `npx expo prebuild --platform android`, then open `mobile/android`.
 
+## Permissions (checked by generating the Android project)
+| Permission | Why | Where it comes from |
+|---|---|---|
+| Internet | talk to your server | always |
+| Camera | scan supplier invoices; asked the first time you tap **Take photo**, with the message "My Shop uses the camera to scan supplier invoices. Photos are not stored." If refused permanently, the app offers to open phone Settings | merged from `expo-image-picker` (configured in `app.json`) |
+| Vibrate | haptic feedback (no prompt) | React Native |
+| Notifications (Android 13+) | only if you turn on alerts on the phone (see docs/NOTIFICATIONS.md) | asked when enabling |
+
+Blocked on purpose: microphone, storage read/write (the system photo picker needs no permission), and
+"draw over other apps". `mobile/test/config.test.mjs` fails if this setup changes.
+
 ## Security notes
 - Token in SecureStore (Android Keystore), `WHEN_UNLOCKED_THIS_DEVICE_ONLY`; never cookies (`credentials: 'omit'`).
 - Server address must be `https://`; `http://` only for private LAN addresses during testing.
