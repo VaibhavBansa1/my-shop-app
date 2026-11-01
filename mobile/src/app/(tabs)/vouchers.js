@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { api } from '../../lib/api.js';
 import { useLoad, useSession } from '../../lib/session.js';
 import { date, money, VOUCHER_TYPES } from '../../lib/format.js';
@@ -12,6 +12,7 @@ export default function Vouchers() {
   const s = useSession();
   const [type, setType] = useState('');
   const list = useLoad(() => api.get(`/orgs/${s.org.id}/vouchers`, { type, limit: 200 }), [s.org.id, type]);
+  useFocusEffect(useCallback(() => { list.reload(); }, [list.reload]));
   return (
     <Screen>
       <FlatList

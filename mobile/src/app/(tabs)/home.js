@@ -1,5 +1,6 @@
+import { useCallback } from 'react';
 import { RefreshControl, ScrollView, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { api } from '../../lib/api.js';
 import { useLoad, useSession } from '../../lib/session.js';
 import { money, qty } from '../../lib/format.js';
@@ -12,6 +13,7 @@ function Stat({ label, value }) {
 export default function Home() {
   const s = useSession();
   const d = useLoad(() => api.get(`/orgs/${s.org.id}/reports/dashboard`), [s.org.id]);
+  useFocusEffect(useCallback(() => { d.reload(); }, [d.reload]));
   const m = d.data?.month ?? {};
   return (
     <Screen>
