@@ -86,6 +86,14 @@ export default function Settings() {
         ))}</tbody></table></div></div>
       )}
 
+      {editable && (
+        <div className="card grid">
+          <h2>Backup</h2>
+          <p className="muted">Download everything in this business (ledgers, items, vouchers, members) as one JSON file. Keep it somewhere safe.</p>
+          <div className="row"><a className="btn" href={`/api/v1/orgs/${org.id}/export`} download>Download backup</a></div>
+        </div>
+      )}
+
       {can('org.delete') && (
         <div className="card grid">
           <h2>Delete this business</h2>

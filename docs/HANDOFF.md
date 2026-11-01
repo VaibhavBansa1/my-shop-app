@@ -15,8 +15,11 @@ This file lets anyone (you on your PC, or a new Claude session) continue the wor
 - CSV export for every report and the voucher list (formula-injection safe); website installable (manifest).
 - Email: SMTP/Resend/Mailpit; account verification (migration 008); invitation + welcome emails.
 - Optional AI summaries (migration 009) via Ollama, LM Studio, Groq, OpenRouter, xAI, OpenAI — docs/AI.md.
+- Field rules decided and enforced (docs/FIELDS.md); glossary (docs/GLOSSARY.md); both shown in-app at /help.
+- Scale tested: 200 businesses + one with 30,000 vouchers, all reports < 0.5 s (docs/PERFORMANCE.md).
+- JSON backup export per business (Settings → Download backup).
 - Password reset by email (Resend via env, dev logs the link); `npm run db:cleanup` for a daily cron.
-- Tests: `npm test` (50, incl. OCR on a real image, AI with a fake model server, real SMTP delivery), `npm run smoke` (27 HTTP checks incl. the mobile flow).
+- Tests: `npm test` (53, incl. role x endpoint matrix, OCR on a real image, AI with a fake model server, real SMTP delivery), `npm run smoke` (27 HTTP checks incl. the mobile flow).
 
 **Android app (`mobile/`)**
 - Expo SDK 58 app: sign in/up (+ forgot password), businesses, home, sell with exact GST preview, correct a bill, add stock items, vouchers with PDF share and
@@ -40,7 +43,7 @@ To keep going with Claude Code locally: *"Read docs/HANDOFF.md and continue with
 1. Owner decisions in docs/MANUAL_TESTING.md (package id, server URL, open sign-up, legal pages).
 2. Configure real email (docs/EMAIL.md) and test AI with your Ollama (docs/AI.md).
 4. Mobile: edit stock items, date picker, offline queue for sales, CSV share.
-5. Exports: JSON backup per business, Tally XML (CSV is done).
+5. Tally XML export; importing data from Tally/Excel (CSV and JSON backup exports are done).
 6. GST e-invoice (IRN/QR) and e-way bill.
 7. TOTP two-factor for owners/admins; list of signed-in devices.
 8. Optional cloud OCR for low-confidence scans (needs owner consent + data agreement).

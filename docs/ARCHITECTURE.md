@@ -27,6 +27,9 @@ table in [`DATABASE.md`](DATABASE.md), and the security model in
 | GST (India) | Per-line GST rate. Intra-state → CGST + SGST; inter-state → IGST, decided from the organization's state and the place of supply. |
 | Reports | Day Book, Ledger statement, Trial Balance, Profit & Loss, Balance Sheet, Stock Summary, GST summary (outward/inward tax by rate), Outstanding receivables/payables. |
 | Audit | Every create/update/cancel is written to an append-only audit log. |
+| Corrections | "Correct" a voucher = new voucher + cancel the original in one transaction. Duplicate supplier bills refused. |
+| Exports | CSV for every report and the voucher list; full JSON backup per business. |
+| Help | Glossary and field reference inside the app (`/help`), from docs/GLOSSARY.md and docs/FIELDS.md. |
 | Invoice scanning | Photo of a supplier invoice → OCR (on phone or server) → reviewed purchase draft → purchase voucher. See [OCR.md](OCR.md). |
 | Email | Account confirmation, password reset, invitations, welcome; SMTP or Resend. See [EMAIL.md](EMAIL.md). |
 | AI (optional) | Plain-language shop summary / Q&A via Ollama, LM Studio, Groq, OpenRouter, Grok or OpenAI. See [AI.md](AI.md). |
@@ -235,6 +238,9 @@ docs/           this documentation
 per process. Phones with ML Kit do the OCR themselves and only send text. Scale OCR by running more
 processes or moving it to a worker queue.
 
+**Measured.** See [PERFORMANCE.md](PERFORMANCE.md): with 200 businesses plus one holding 30,000
+vouchers, every report stays under 0.5 s and small businesses are unaffected.
+
 **Load estimate.** 10,000 orgs × 50 vouchers/day = 500k vouchers/day ≈ 6/s average,
 maybe 60/s peak. Each voucher ≈ 1 voucher row + ~4 entries + ~3 items ≈ 1–2 KB.
 That is ~1 GB/day at the high end — fine for one Postgres for years, with
@@ -244,8 +250,8 @@ partitioning by `org_id` hash as a later option.
 behind a load balancer. Postgres scales vertically first, then read replicas for
 reports, then partitioning.
 
-**Backups.** Use a managed Postgres with point-in-time recovery. Organization owners
-can export their data (planned).
+**Backups.** Use a managed Postgres with point-in-time recovery. Owners/admins can also
+download a complete JSON backup of their business (Settings → Download backup).
 
 **Monitoring.** Structured JSON logs with request id, user id, org id, latency;
 health endpoint `/api/health` (checks DB). Alert on 5xx rate and DB connection errors.
@@ -271,7 +277,5 @@ health endpoint `/api/health` (checks DB). Alert on 5xx rate and DB connection e
 - Multi-currency, multiple godowns (warehouses), batches and expiry dates.
 - Offline-first mobile app with sync (needs conflict rules; vouchers are append-only,
   which helps).
-- Email delivery for invitations and password reset (currently the invite link is
-  shown to the inviter to share by WhatsApp/email).
 - Two-factor authentication for owners and admins.
-- Data export (Tally XML / Excel) and import.
+- Tally XML export and data import (JSON backup export and CSV report exports are done).

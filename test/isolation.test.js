@@ -67,3 +67,16 @@ test('membership rows of other orgs stay hidden from org admins', async () => {
   assert.ok(!list.members.some((m) => m.userId === b.user.id));
   assert.ok(inviteMember && acceptInvitation);
 });
+
+test('backup export contains only the caller\'s own business', async () => {
+  const { exportOrganization } = await import('../lib/services/exportData.js');
+  const m = await import('../lib/services/masters.js');
+  const a = await makeUserOrg();
+  const b = await makeUserOrg();
+  const groups = await m.listGroups(b.db);
+  await m.createLedger(b.db, { name: 'B secret customer', groupId: groups.find((g) => g.code === 'sundry_debtors').id });
+  const dump = await exportOrganization(a.db);
+  assert.equal(dump.organization.id, a.org.id);
+  assert.ok(!JSON.stringify(dump).includes('B secret customer'));
+  assert.ok(dump.ledgers.length > 5 && dump.members.length === 1);
+});

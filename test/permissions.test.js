@@ -73,6 +73,7 @@ test('every role can do exactly what its permissions allow', async () => {
     ['list vouchers', 'vouchers', 'GET', 'viewer', {}],
     ['reports', 'reports/[report]', 'GET', 'viewer', { report: 'profit-loss' }],
     ['audit log', 'audit', 'GET', 'admin', {}],
+    ['backup export', 'export', 'GET', 'admin', {}],
     ['scan text', 'ocr/parse', 'POST', 'accountant', {}, () => ({ text: 'Invoice No 1\nTotal 10' })],
   ];
 

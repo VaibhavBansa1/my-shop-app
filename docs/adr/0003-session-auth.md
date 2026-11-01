@@ -40,11 +40,11 @@ scaling. The same token works for web and native.
 
 ## Consequences
 - Easier: "sign out everywhere", removing staff, auditing logins.
-- Harder: we own password reset and MFA (planned).
+- Harder: we own password reset (done) and MFA (planned).
 - Revisit: add TOTP 2FA for owners/admins; email verification once email sending exists.
 
 ## Action Items
 1. [x] `lib/auth/password.js` (scrypt, constant-time compare).
 2. [x] `sessions` table with hashed tokens and expiry.
 3. [x] Login throttling table and checks.
-4. [ ] Password reset by email (needs an email provider).
+4. [x] Password reset by email (docs/EMAIL.md); email verification added too.

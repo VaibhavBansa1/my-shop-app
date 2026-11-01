@@ -53,6 +53,7 @@ Dates are `YYYY-MM-DD`.
 | POST | `/orgs/{org}/vouchers/{id}/cancel` | accountant | `{reason}` |
 | GET | `/orgs/{org}/reports/{name}` | viewer | `dashboard, trial-balance, profit-loss, balance-sheet, day-book, stock-summary, gst-summary, outstanding (?kind=receivable|payable), ledger (?ledger=)`; `?from=&to=` |
 | GET | `/orgs/{org}/audit` | admin | `?before=&limit=` |
+| GET | `/orgs/{org}/export` | admin | complete JSON backup of the business (download) |
 | POST | `/orgs/{org}/ocr/invoice` | accountant | body = photo bytes, `Content-Type: image/jpeg` or `image/png`, ≤ 8 MB; returns a purchase draft. 60/hour per user |
 | POST | `/orgs/{org}/ai/summary` | viewer | `{period: today|week|month|fy, language: en|hi|hinglish, question?}` → `{summary, provider, model, local, namesShared}`; business must have AI on; 30/hour |
 | POST | `/orgs/{org}/ocr/parse` | accountant | `{text}` (≤ 50,000 chars) from on-device OCR; returns a purchase draft. 300/hour per user |
