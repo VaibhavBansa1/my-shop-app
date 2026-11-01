@@ -30,6 +30,8 @@
 | Mobile token theft | Token in SecureStore (Keystore), device-only; cookies never used by the app; `allowBackup=false`; 401 wipes token | `mobile/src/lib/api.js` |
 | Mobile MITM | https required for the server address (http only for private LAN during testing) | `mobile/src/lib/url.js` |
 | Unverified sign-ups | Email confirmation (one-time hashed 24 h links) required before creating/joining a business when email is configured | `lib/services/verification.js` |
+| Host-header poisoning of email links | Links built only from `APP_ORIGIN` in production (request Host ignored); missing setting fails closed | `lib/http.js#publicOrigin` |
+| Header injection via names | Names reject CR/LF and control characters | `lib/validation.js` |
 | Email injection / spoofed content | Escaped HTML templates; links built from `APP_ORIGIN`; SMTP requires TLS to remote hosts | `lib/emailTemplates.js`, `lib/email.js` |
 | AI data exposure | Off by default (server + per business); facts only; names hidden from cloud models by default; no narrations/contacts; audit entry per request | `lib/services/aiSummary.js`, ADR-0008 |
 | AI prompt injection | Model has no tools and no data access; facts wrapped and declared as data; output rendered as plain text | `lib/services/aiSummary.js` |
