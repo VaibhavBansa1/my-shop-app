@@ -42,7 +42,8 @@
 `test/isolation.test.js` (raw SQL as the app role cannot cross tenants, cannot disable RLS,
 cannot delete vouchers/audit), `test/vouchers.test.js` (balance trigger, immutability),
 `test/members.test.js`, `test/auth.test.js`, `test/ocr.test.js` (upload guards, tenant-scoped matching),
-`test/invoiceParser.test.js` (hostile input), `mobile/test/pure.test.mjs` (URL policy, HTML escaping), and
+`test/invoiceParser.test.js` (hostile input), `test/permissions.test.js` (every role × every endpoint
+through the real HTTP handlers; outsiders get 404, anonymous 401), `mobile/test/pure.test.mjs` (URL policy, HTML escaping), and
 `scripts/smoke.mjs` over HTTP (CSRF, cross-org 404s, forged sessions, bearer flow, mobile flow, OCR).
 
 ## Known gaps / next steps

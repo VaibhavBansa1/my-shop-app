@@ -70,6 +70,9 @@ npm run smoke
 See [docs/MOBILE.md](docs/MOBILE.md). In short: `cd mobile && npm install && npx expo run:android`.
 
 ## Documentation
+- [docs/GLOSSARY.md](docs/GLOSSARY.md) — every title and keyword explained (also in the app at /help)
+- [docs/FIELDS.md](docs/FIELDS.md) — every field: required or optional, and why
+- [docs/PERFORMANCE.md](docs/PERFORMANCE.md) — scale test results
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — system design, requirements, trade-offs
 - [docs/DATABASE.md](docs/DATABASE.md) — every table and rule
 - [docs/SECURITY.md](docs/SECURITY.md) — threat model and controls

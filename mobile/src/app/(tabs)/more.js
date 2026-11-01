@@ -1,4 +1,5 @@
-import { ScrollView } from 'react-native';
+import { Linking, ScrollView } from 'react-native';
+import { getServerUrl } from '../../lib/config.js';
 import { router } from 'expo-router';
 import { useSession } from '../../lib/session.js';
 import { ROLE_LABEL } from '../../lib/format.js';
@@ -24,6 +25,7 @@ export default function More() {
         </Card>
         <Card>
           <Row title="Switch business" right="›" onPress={async () => { await s.clearOrg(); router.replace('/orgs'); }} />
+          <Row title="Help & glossary" subtitle="What every word and field means" right="›" onPress={async () => Linking.openURL(`${await getServerUrl()}/help`)} />
           <Row title="Server" right="›" onPress={go('/server')} />
           <Row title="Sign out" danger onPress={async () => { await s.logout(); router.replace('/login'); }} />
         </Card>

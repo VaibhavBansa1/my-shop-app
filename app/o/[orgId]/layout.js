@@ -17,6 +17,7 @@ const NAV = [
   { sep: true },
   { href: '/team', label: 'Team', ico: '☺', perm: 'members.read' },
   { href: '/settings', label: 'Settings', ico: '⚙' },
+  { href: '/help', label: 'Help & glossary', ico: '?', external: true },
 ];
 const TABS = ['', '/vouchers/new?type=sales', '/vouchers', '/items', '/reports'];
 
@@ -41,7 +42,7 @@ export default function OrgLayout({ children, params }) {
           <Link className="org-switch" href="/orgs">{o.name}<small>{ROLE_LABEL[o.role]} · switch</small></Link>
           <nav className="nav" aria-label="Main">
             {NAV.filter((n) => !n.perm || can(n.perm)).map((n, i) => n.sep ? <div key={i} className="nav-sep" /> : (
-              <Link key={n.href} href={base + n.href} className={isActive(n) ? 'active' : ''}>{n.ico} {n.label}</Link>
+              <Link key={n.href} href={n.external ? n.href : base + n.href} className={!n.external && isActive(n) ? 'active' : ''}>{n.ico} {n.label}</Link>
             ))}
           </nav>
         </aside>
