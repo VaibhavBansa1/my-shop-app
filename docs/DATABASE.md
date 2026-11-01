@@ -98,3 +98,5 @@ users ──< memberships >── organizations ──< invitations
 | 005_fix_accept_invitation | OUT-parameter name clash fix |
 | 006_deferrable_master_fks | org deletion with vouchers; revoke DELETE on masters |
 | 007_password_resets | one-time password reset tokens (hashed) |
+| 008_email_verification | `users.email_verified_at`, `email_verifications` tokens |
+| 009_org_ai_setting | `organizations.ai_enabled` opt-in |

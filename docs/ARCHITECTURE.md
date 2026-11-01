@@ -28,6 +28,8 @@ table in [`DATABASE.md`](DATABASE.md), and the security model in
 | Reports | Day Book, Ledger statement, Trial Balance, Profit & Loss, Balance Sheet, Stock Summary, GST summary (outward/inward tax by rate), Outstanding receivables/payables. |
 | Audit | Every create/update/cancel is written to an append-only audit log. |
 | Invoice scanning | Photo of a supplier invoice → OCR (on phone or server) → reviewed purchase draft → purchase voucher. See [OCR.md](OCR.md). |
+| Email | Account confirmation, password reset, invitations, welcome; SMTP or Resend. See [EMAIL.md](EMAIL.md). |
+| AI (optional) | Plain-language shop summary / Q&A via Ollama, LM Studio, Groq, OpenRouter, Grok or OpenAI. See [AI.md](AI.md). |
 | Android app | Sell, receipts/expenses, vouchers with PDF share, stock, parties, reports, invoice scanning. See [MOBILE.md](MOBILE.md). |
 
 ### Non-functional

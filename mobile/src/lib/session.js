@@ -7,7 +7,7 @@ const ORG_KEY = 'myshop.orgId';
 const SessionContext = createContext(null);
 
 export function SessionProvider({ children }) {
-  const [state, setState] = useState({ ready: false, user: null, orgs: [], org: null });
+  const [state, setState] = useState({ ready: false, user: null, orgs: [], org: null, verification: 'off' });
 
   const loadOrg = useCallback(async (orgId) => {
     if (!orgId) return null;
@@ -22,7 +22,7 @@ export function SessionProvider({ children }) {
       const saved = await SecureStore.getItemAsync(ORG_KEY);
       const pick = me.orgs.find((o) => o.id === saved) ?? (me.orgs.length === 1 ? me.orgs[0] : null);
       const org = pick ? await loadOrg(pick.id) : null;
-      setState({ ready: true, user: me.user, orgs: me.orgs, org });
+      setState({ ready: true, user: me.user, orgs: me.orgs, org, verification: me.verification ?? 'off' });
     } catch {
       setState({ ready: true, user: null, orgs: [], org: null });
     }

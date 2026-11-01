@@ -42,6 +42,15 @@ These need your judgement; the code works either way.
 15. On a phone browser: menu → Add to Home screen → opens full screen with the ₹ icon.
 16. Phone browser: everything usable, bottom tab bar, no sideways scrolling, dark mode readable.
 
+## Email and AI (on your PC)
+1. `docker compose up -d` (starts Mailpit). In `.env.local`: `EMAIL_PROVIDER=smtp`, `SMTP_HOST=localhost`, `SMTP_PORT=1025`.
+2. Sign up a new account → open http://localhost:8025 → click "Confirm email" → you can now create a business.
+3. Invite someone → the invitation appears in Mailpit. Forgot password → reset email appears in Mailpit.
+4. Ollama: `ollama pull llama3.2`, set `AI_PROVIDER=ollama`, `AI_MODEL=llama3.2`, restart → Settings → turn on AI →
+   Home → ✨ Shop summary in English, then Hindi, then ask a question. Check the numbers against Reports.
+5. Try LM Studio and Groq the same way (see docs/AI.md). With Groq, confirm the note says names were not shared.
+6. Stop Ollama and press Summarise → a clear "Could not reach the AI server" message.
+
 ## Android app
 1. Build: `cd mobile && npx expo run:android` (or EAS preview APK). Set Server to your PC's address.
 2. Sign in with the website account → pick the business → Home numbers match the website.

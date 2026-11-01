@@ -1,4 +1,7 @@
-# Local Postgres for development: `docker compose up -d`, then `npm run db:setup`.
+# Local services for development:
+#   docker compose up -d
+#   Postgres  -> localhost:5432 (then: npm run db:setup)
+#   Mailpit   -> SMTP localhost:1025, inbox UI http://localhost:8025  (set EMAIL_PROVIDER=smtp, SMTP_HOST=localhost, SMTP_PORT=1025)
 services:
   db:
     image: postgres:16
@@ -8,5 +11,10 @@ services:
       - "5432:5432"
     volumes:
       - shop-pg:/var/lib/postgresql/data
+  mail:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 volumes:
   shop-pg:

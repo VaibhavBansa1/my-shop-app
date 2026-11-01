@@ -4,10 +4,12 @@ import { api } from '../../ui/api.js';
 import { useApi, Loading, ErrorNote, PageHead } from '../../ui/components.js';
 import { useOrg } from '../../ui/OrgContext.js';
 import { money, qty } from '../../ui/format.js';
+import AiSummary from '../../ui/AiSummary.js';
 
 export default function Dashboard() {
   const { org, base, can } = useOrg();
   const d = useApi(() => api(`/orgs/${org.id}/reports/dashboard`), [org.id]);
+  const ai = useApi(() => api('/ai/status'), []);
   return (
     <>
       <PageHead title={org.name} sub="Today at a glance" />
@@ -46,6 +48,10 @@ export default function Dashboard() {
             </div>
           </div>
         </>
+      )}
+      {ai.data?.available && org.aiEnabled && <AiSummary orgId={org.id} />}
+      {ai.data?.available && !org.aiEnabled && can('org.update') && (
+        <p className="muted no-print" style={{ marginTop: 14, fontSize: 13 }}>AI shop summaries are available on this server. Turn them on in Settings.</p>
       )}
     </>
   );

@@ -23,6 +23,7 @@ function Nav() {
         <Stack.Screen name="parties" options={{ title: 'Customers & suppliers' }} />
         <Stack.Screen name="ledger/[id]" options={{ title: 'Ledger' }} />
         <Stack.Screen name="item-new" options={{ title: 'New stock item' }} />
+        <Stack.Screen name="summary" options={{ title: 'Shop summary (AI)' }} />
       </Stack>
     </>
   );

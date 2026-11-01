@@ -6,7 +6,7 @@ import { isValidGstin } from '../../../shared/gstin.js';
 import { api } from '../lib/api.js';
 import { useSession } from '../lib/session.js';
 import { ROLE_LABEL } from '../lib/format.js';
-import { Button, Card, ErrorNote, Field, Picker, Row, Screen, T } from '../components/ui.js';
+import { Button, Card, ErrorNote, Field, Note, Picker, Row, Screen, T } from '../components/ui.js';
 
 export default function Orgs() {
   const s = useSession();
@@ -14,6 +14,7 @@ export default function Orgs() {
   const [f, setF] = useState({ name: '', gstin: '', stateCode: '23', address: '', phone: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [resent, setResent] = useState(false);
   const set = (k) => (v) => setF({ ...f, [k]: v });
   const gstinBad = f.gstin.trim() && !isValidGstin(f.gstin.trim().toUpperCase());
 
@@ -30,6 +31,15 @@ export default function Orgs() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
+        {s.user && !s.user.emailVerified && s.verification !== 'off' && (
+          <Card>
+            <T bold>Please confirm your email address.</T>
+            <T muted small style={{ marginVertical: 6 }}>Open the link we emailed you, then come back and pull to refresh.{s.verification === 'required' ? ' You need this before creating or joining a business.' : ''}</T>
+            {resent ? <Note kind="ok">Sent again. Check your inbox and spam folder.</Note>
+              : <Button small kind="secondary" title="Send the link again" onPress={async () => { try { await api.post('/auth/verify-email/request'); setResent(true); } catch (e) { setError(e); } }} />}
+            <Button small kind="secondary" title="I have confirmed it" onPress={() => s.refresh()} style={{ marginTop: 8 }} />
+          </Card>
+        )}
         {s.orgs.length > 0 && (
           <Card>
             {s.orgs.map((o) => <Row key={o.id} title={o.name} subtitle={`${ROLE_LABEL[o.role]}${o.gstin ? ` · GSTIN ${o.gstin}` : ''}`} right="›" onPress={() => open(o.id)} />)}

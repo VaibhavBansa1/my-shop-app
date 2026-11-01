@@ -15,6 +15,7 @@ export default function Settings() {
   const [msg, setMsg] = useState(null);
   const [error, setError] = useState(null);
   const [confirmName, setConfirmName] = useState('');
+  const ai = useApi(() => api('/ai/status'), []);
   const audit = useApi(() => (can('audit.read') ? api(`/orgs/${org.id}/audit`, { query: { limit: 50 } }) : Promise.resolve(null)), [org.id]);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
@@ -46,6 +47,24 @@ export default function Settings() {
           {editable && <div className="row"><button className="btn btn-primary">Save</button></div>}
         </fieldset>
       </form>
+
+      <div className="card grid">
+        <h2>AI assistant (optional)</h2>
+        {!ai.data?.available ? (
+          <p className="muted">AI is not set up on this server. The person who runs the server can connect Ollama or LM Studio on their own
+            computer, or a cloud service (OpenRouter, Grok, OpenAI). See docs/AI.md.</p>
+        ) : (<>
+          <p>This server uses <b>{ai.data.provider}</b> ({ai.data.model}){ai.data.local ? ', running on your own computer/network — your data stays with you.' : ', a cloud service.'}</p>
+          {!ai.data.local && <p className="note note-warn">Summaries send your shop's figures to {ai.data.provider}.
+            {ai.data.sharesNames ? ' Customer, supplier and item names are included.' : ' Customer, supplier and item names are replaced with placeholders.'}</p>}
+          <label className="row" style={{ gap: 10 }}>
+            <input type="checkbox" style={{ width: 20, minHeight: 20 }} disabled={!editable} checked={Boolean(org.aiEnabled)}
+              onChange={(e) => run(async () => { await api(`/orgs/${org.id}`, { method: 'PATCH', body: { aiEnabled: e.target.checked } }); reloadOrg(); },
+                e.target.checked ? 'AI summaries turned on. Find them on the Home page.' : 'AI summaries turned off.')} />
+            <span>Turn on AI shop summaries for this business</span>
+          </label>
+        </>)}
+      </div>
 
       <form className="card grid" onSubmit={(e) => { e.preventDefault(); run(async () => { await api('/auth/password', { method: 'POST', body: pw }); setPw({ currentPassword: '', newPassword: '' }); }, 'Password changed. Other devices were signed out.'); }}>
         <h2>Your password</h2>

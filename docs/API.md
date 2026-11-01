@@ -28,11 +28,14 @@ Dates are `YYYY-MM-DD`.
 | POST | `/auth/password` | signed in | `{currentPassword, newPassword}`; signs out other devices |
 | POST | `/auth/password-reset/request` | — | `{email}`; always the same answer (no account enumeration); 3/hour per email |
 | POST | `/auth/password-reset/confirm` | — | `{token, newPassword}`; one-time, 30-minute token; signs out all devices |
-| GET | `/me` | signed in | user + organizations with your role |
+| POST | `/auth/verify-email/request` | signed in | re-send the confirmation link (5/hour) |
+| POST | `/auth/verify-email/confirm` | — | `{token}` confirms the email |
+| GET | `/ai/status` | signed in | `{available, provider, model, local, sharesNames}` (no secrets) |
+| GET | `/me` | signed in | user (with `emailVerified`), `verification` policy, `ai` status, organizations with your role |
 | GET/POST | `/invitations/accept` | signed in | GET `?token=` preview; POST `{token}` join |
 | GET/POST | `/orgs` | signed in | list / create (you become owner; chart of accounts is seeded) |
 | GET | `/orgs/{org}` | viewer | includes `permissions` for your role |
-| PATCH | `/orgs/{org}` | admin | business details |
+| PATCH | `/orgs/{org}` | admin | business details, `aiEnabled` |
 | DELETE | `/orgs/{org}` | owner | `{confirmName}` must equal the name |
 | GET | `/orgs/{org}/members` | admin | members + pending invitations |
 | PATCH/DELETE | `/orgs/{org}/members/{userId}` | admin (self-delete = leave, any role) | `{role}` |
@@ -51,6 +54,7 @@ Dates are `YYYY-MM-DD`.
 | GET | `/orgs/{org}/reports/{name}` | viewer | `dashboard, trial-balance, profit-loss, balance-sheet, day-book, stock-summary, gst-summary, outstanding (?kind=receivable|payable), ledger (?ledger=)`; `?from=&to=` |
 | GET | `/orgs/{org}/audit` | admin | `?before=&limit=` |
 | POST | `/orgs/{org}/ocr/invoice` | accountant | body = photo bytes, `Content-Type: image/jpeg` or `image/png`, ≤ 8 MB; returns a purchase draft. 60/hour per user |
+| POST | `/orgs/{org}/ai/summary` | viewer | `{period: today|week|month|fy, language: en|hi|hinglish, question?}` → `{summary, provider, model, local, namesShared}`; business must have AI on; 30/hour |
 | POST | `/orgs/{org}/ocr/parse` | accountant | `{text}` (≤ 50,000 chars) from on-device OCR; returns a purchase draft. 300/hour per user |
 | GET | `/api/health` | — | DB health check |
 

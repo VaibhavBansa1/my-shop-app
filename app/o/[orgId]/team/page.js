@@ -16,13 +16,14 @@ export default function Team() {
   const list = useApi(() => api(`/orgs/${org.id}/members`), [org.id]);
   const [form, setForm] = useState({ email: '', role: 'cashier' });
   const [link, setLink] = useState(null);
+  const [emailed, setEmailed] = useState(false);
   const [error, setError] = useState(null);
   const manageable = org.role === 'owner' ? ['owner', 'admin', 'accountant', 'cashier', 'viewer'] : ['accountant', 'cashier', 'viewer'];
 
   async function act(fn) { setError(null); try { await fn(); list.reload(); } catch (e) { setError(e); } }
   async function invite(e) {
     e.preventDefault();
-    await act(async () => { const r = await api(`/orgs/${org.id}/invitations`, { method: 'POST', body: form }); setLink(r.link); setForm({ ...form, email: '' }); });
+    await act(async () => { const r = await api(`/orgs/${org.id}/invitations`, { method: 'POST', body: form }); setLink(r.link); setEmailed(r.emailed); setForm({ ...form, email: '' }); });
   }
 
   if (!can('members.read')) return <ErrorNote error={new Error('Only admins and owners can manage the team.')} />;
@@ -40,7 +41,7 @@ export default function Team() {
         <div className="row"><button className="btn btn-primary">Create invitation link</button></div>
         {link && (
           <div className="note note-ok">
-            Share this link with them (WhatsApp, SMS or email). It works once, for that email only, for 7 days. It will not be shown again.
+            {emailed ? 'Invitation emailed. You can also share this link (WhatsApp, SMS).' : 'Share this link with them (WhatsApp, SMS or email).'} It works once, for that email only, for 7 days. It will not be shown again.
             <div className="row" style={{ marginTop: 8 }}><input readOnly value={link} onFocus={(e) => e.target.select()} />
               <button type="button" className="btn btn-sm" onClick={() => navigator.clipboard?.writeText(link)}>Copy</button></div>
           </div>

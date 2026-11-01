@@ -59,7 +59,14 @@ test('config: presets, validation and status never leak the key', async () => {
   assert.ok(!JSON.stringify(aiStatus()).includes('sk-secret'));
   process.env.AI_PROVIDER = 'custom'; process.env.AI_BASE_URL = 'http://example.com/v1'; process.env.AI_MODEL = 'm';
   assert.ok(aiConfig().problems.some((p) => /https/.test(p)), 'plain http to the internet refused');
-  process.env.AI_PROVIDER = 'xai'; delete process.env.AI_BASE_URL; delete process.env.AI_MODEL;
+  process.env.AI_PROVIDER = 'groq'; delete process.env.AI_BASE_URL; delete process.env.AI_MODEL;
+  assert.equal(aiConfig().baseUrl, 'https://api.groq.com/openai/v1');
+  assert.ok(aiConfig().problems.some((p) => /AI_MODEL/.test(p)), 'Groq needs an explicit model');
+  process.env.AI_MODEL = 'some-groq-model';
+  assert.deepEqual(aiConfig().problems, [], 'Groq with key + model is valid');
+  assert.equal(aiConfig().local, false);
+  delete process.env.AI_MODEL;
+  process.env.AI_PROVIDER = 'xai';
   assert.ok(aiConfig().problems.some((p) => /AI_MODEL/.test(p)), 'Grok needs an explicit model');
   assert.ok(isLocalUrl('http://192.168.1.5:1234/v1'));
   assert.ok(!isLocalUrl('https://openrouter.ai/api/v1'));

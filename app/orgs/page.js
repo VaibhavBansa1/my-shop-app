@@ -31,6 +31,7 @@ export default function OrgsPage() {
         <div className="row"><span className="muted">{me.data?.user?.name}</span><button className="btn btn-sm" onClick={logout}>Sign out</button></div>
       </header>
       <div className="auth-box" style={{ maxWidth: 560 }}>
+        {me.data && !me.data.user.emailVerified && me.data.verification !== 'off' && <VerifyBanner required={me.data.verification === 'required'} />}
         <div className="card">
           <h1 style={{ marginBottom: 12 }}>Your businesses</h1>
           {orgs.length === 0 && <p className="muted">You don’t have a business yet. Create one below, or open an invitation link from your employer.</p>}
@@ -58,6 +59,23 @@ export default function OrgsPage() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function VerifyBanner({ required }) {
+  const [msg, setMsg] = useState(null);
+  const [error, setError] = useState(null);
+  async function resend() {
+    setError(null);
+    try { await api('/auth/verify-email/request', { method: 'POST' }); setMsg('Sent. Check your inbox (and spam folder).'); } catch (e) { setError(e); }
+  }
+  return (
+    <div className="card" style={{ borderColor: 'var(--warn)' }}>
+      <b>Please confirm your email address.</b>
+      <p className="muted">We sent you a link when you signed up.{required ? ' You need to confirm it before you can create or join a business.' : ''}</p>
+      <ErrorNote error={error} />
+      {msg ? <div className="note note-ok">{msg}</div> : <button className="btn btn-sm" onClick={resend} style={{ marginTop: 8 }}>Send the link again</button>}
     </div>
   );
 }

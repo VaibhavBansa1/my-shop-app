@@ -20,6 +20,7 @@ export default function More() {
           {s.can('voucher.create.purchase') && <Row title="Scan purchase invoice" subtitle="Read a supplier bill with the camera" right="›" onPress={go('/scan')} />}
           <Row title="Customers & suppliers" right="›" onPress={go('/parties')} />
           <Row title="Reports" subtitle="Profit & loss, GST, dues, stock" right="›" onPress={go('/reports')} />
+          {s.org.aiEnabled && <Row title="✨ Shop summary (AI)" subtitle="Plain-language summary in English, Hindi or Hinglish" right="›" onPress={go('/summary')} />}
         </Card>
         <Card>
           <Row title="Switch business" right="›" onPress={async () => { await s.clearOrg(); router.replace('/orgs'); }} />

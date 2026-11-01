@@ -72,6 +72,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand-soft)
 /* cards, notes, tables */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); min-width: 0; }
 .card + .card { margin-top: 14px; }
+.grid > .card + .card, .row > .card + .card { margin-top: 0; }
 .card h2 { margin-bottom: 10px; }
 .note { padding: 10px 12px; border-radius: 10px; font-size: 14px; margin: 10px 0; }
 .note-error { background: var(--danger-soft); color: var(--danger); }

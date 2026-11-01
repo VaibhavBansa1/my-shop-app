@@ -29,6 +29,11 @@
 | GSTIN typos / spoofed scans | GSTIN check digit validated on every save and in the parser | `shared/gstin.js` |
 | Mobile token theft | Token in SecureStore (Keystore), device-only; cookies never used by the app; `allowBackup=false`; 401 wipes token | `mobile/src/lib/api.js` |
 | Mobile MITM | https required for the server address (http only for private LAN during testing) | `mobile/src/lib/url.js` |
+| Unverified sign-ups | Email confirmation (one-time hashed 24 h links) required before creating/joining a business when email is configured | `lib/services/verification.js` |
+| Email injection / spoofed content | Escaped HTML templates; links built from `APP_ORIGIN`; SMTP requires TLS to remote hosts | `lib/emailTemplates.js`, `lib/email.js` |
+| AI data exposure | Off by default (server + per business); facts only; names hidden from cloud models by default; no narrations/contacts; audit entry per request | `lib/services/aiSummary.js`, ADR-0008 |
+| AI prompt injection | Model has no tools and no data access; facts wrapped and declared as data; output rendered as plain text | `lib/services/aiSummary.js` |
+| SSRF via AI | AI base URL comes only from server env, https required for non-local hosts, redirects refused | `lib/ai/index.js` |
 | Injection into shared PDFs | Invoice HTML escapes every value and carries a deny-all CSP | `mobile/src/lib/invoiceHtml.js` |
 
 ## Verified by tests
@@ -41,7 +46,7 @@ cannot delete vouchers/audit), `test/vouchers.test.js` (balance trigger, immutab
 ## Known gaps / next steps
 - Password reset is built (one-time 30-minute links, hashed tokens, same answer for unknown emails, signs out
   everywhere). It needs an email provider in production: set `RESEND_API_KEY` and `EMAIL_FROM`.
-- Email verification of new accounts is not built yet.
+- Email verification is built (see docs/EMAIL.md).
 - Two-factor authentication (TOTP) for owners/admins.
 - Sign-up reveals whether an email already has an account (accepted trade-off for usability).
 - Per-IP throttling needs `TRUST_PROXY=1` behind a proxy that sets `X-Forwarded-For`.
