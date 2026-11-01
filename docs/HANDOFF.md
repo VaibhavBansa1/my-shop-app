@@ -16,7 +16,7 @@ This file lets anyone (you on your PC, or a new Claude session) continue the wor
 - Email: SMTP/Resend/Mailpit; account verification (migration 008); invitation + welcome emails.
 - Optional AI summaries (migration 009) via Ollama, LM Studio, Groq, OpenRouter, xAI, OpenAI — docs/AI.md.
 - Password reset by email (Resend via env, dev logs the link); `npm run db:cleanup` for a daily cron.
-- Tests: `npm test` (50 incl. OCR, AI, SMTP on a real image), `npm run smoke` (27 HTTP checks incl. the mobile flow).
+- Tests: `npm test` (50, incl. OCR on a real image, AI with a fake model server, real SMTP delivery), `npm run smoke` (27 HTTP checks incl. the mobile flow).
 
 **Android app (`mobile/`)**
 - Expo SDK 58 app: sign in/up (+ forgot password), businesses, home, sell with exact GST preview, correct a bill, add stock items, vouchers with PDF share and
