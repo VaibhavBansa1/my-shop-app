@@ -1,6 +1,6 @@
 // Runs before every page request: sets a strict, nonce-based Content Security Policy.
 // Next.js reads the nonce from the request CSP header and applies it to its own scripts.
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server.js';
 
 export function proxy(request) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
