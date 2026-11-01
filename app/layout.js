@@ -1,11 +1,15 @@
 import './globals.css';
+import { headers } from 'next/headers';
 
 export const metadata = {
-  title: 'My Shop App',
-  description: 'Shop management app with PostgreSQL and Next.js',
+  title: { default: 'My Shop App', template: '%s · My Shop App' },
+  description: 'Accounting, inventory and GST billing for shops. Works on phone and computer.',
 };
+export const viewport = { width: 'device-width', initialScale: 1, themeColor: '#0f766e' };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  // Reading headers makes every page dynamic so the per-request CSP nonce is applied.
+  await headers();
   return (
     <html lang="en">
       <body>{children}</body>
