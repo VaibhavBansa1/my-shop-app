@@ -5,6 +5,7 @@ import { api } from '../../../ui/api.js';
 import { useApi, Loading, ErrorNote, PageHead, Empty } from '../../../ui/components.js';
 import { useOrg } from '../../../ui/OrgContext.js';
 import { money, date, VOUCHER_TYPES, monthStart, today } from '../../../ui/format.js';
+import { downloadCsv } from '../../../ui/download.js';
 
 export default function Vouchers() {
   const { org, base } = useOrg();
@@ -14,7 +15,11 @@ export default function Vouchers() {
   const list = useApi(() => api(`/orgs/${org.id}/vouchers`, { query: { type, from, to, limit: 300 } }), [org.id, type, from, to]);
   return (
     <>
-      <PageHead title="Vouchers" sub="Every sale, purchase, receipt and payment" actions={<Link className="btn btn-primary" href={`${base}/vouchers/new?type=${type || 'sales'}`}>+ New</Link>} />
+      <PageHead title="Vouchers" sub="Every sale, purchase, receipt and payment" actions={<>
+        <button className="btn" disabled={!list.data?.vouchers.length} onClick={() => downloadCsv(`${org.name}-vouchers-${from}-to-${to}.csv`,
+          [['Date', 'Voucher', 'Type', 'Party', 'Taxable', 'GST', 'Total', 'Status', 'Reference', 'Narration'],
+           ...list.data.vouchers.map((v) => [v.date, v.label, VOUCHER_TYPES[v.type], v.partyName, v.taxableTotal, v.taxTotal, v.total, v.status, v.reference, v.narration])])}>Download CSV</button>
+        <Link className="btn btn-primary" href={`${base}/vouchers/new?type=${type || 'sales'}`}>+ New</Link></>} />
       <div className="chips">
         <button className={`chip ${type === '' ? 'active' : ''}`} onClick={() => setType('')}>All</button>
         {Object.entries(VOUCHER_TYPES).map(([k, v]) => <button key={k} className={`chip ${type === k ? 'active' : ''}`} onClick={() => setType(k)}>{v}</button>)}

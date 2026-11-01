@@ -5,6 +5,7 @@ import { api } from '../../../ui/api.js';
 import { useApi, Loading, ErrorNote, PageHead } from '../../../ui/components.js';
 import { useOrg } from '../../../ui/OrgContext.js';
 import { money, amount, qty, date, today, monthStart, VOUCHER_TYPES } from '../../../ui/format.js';
+import { downloadCsv, reportRows } from '../../../ui/download.js';
 
 const REPORTS = [
   ['profit-loss', 'Profit & Loss', 'range'], ['balance-sheet', 'Balance Sheet', 'asof'], ['trial-balance', 'Trial Balance', 'asof'],
@@ -94,7 +95,9 @@ export default function Reports() {
   const current = data.data?.id === id ? data.data.d : null;
   return (
     <>
-      <PageHead title={r[1]} sub={r[2] === 'range' ? `${date(from)} to ${date(to)}` : `As on ${date(to)}`} actions={<button className="btn no-print" onClick={() => window.print()}>Print</button>} />
+      <PageHead title={r[1]} sub={r[2] === 'range' ? `${date(from)} to ${date(to)}` : `As on ${date(to)}`} actions={<>
+        <button className="btn no-print" disabled={!current} onClick={() => downloadCsv(`${org.name}-${r[1]}-${to}.csv`, reportRows(id, current))}>Download CSV</button>
+        <button className="btn no-print" onClick={() => window.print()}>Print</button></>} />
       <div className="chips no-print">{REPORTS.map(([k, label]) => <button key={k} className={`chip ${id === k ? 'active' : ''}`} onClick={() => setId(k)}>{label}</button>)}</div>
       <div className="row no-print" style={{ marginBottom: 12 }}>
         {r[2] === 'range' && <><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ maxWidth: 170 }} aria-label="From" /><span className="muted">to</span></>}
