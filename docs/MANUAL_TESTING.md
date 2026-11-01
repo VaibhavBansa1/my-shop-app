@@ -51,6 +51,15 @@ These need your judgement; the code works either way.
 5. Try LM Studio and Groq the same way (see docs/AI.md). With Groq, confirm the note says names were not shared.
 6. Stop Ollama and press Summarise → a clear "Could not reach the AI server" message.
 
+## Import, stock count, multiple firms
+1. Stock → Import CSV → Download template → fill 10 items in Excel → save as CSV → choose file → preview →
+   fix any rows it reports → Import. Repeat for customers & suppliers.
+2. Stock → Count stock → enter real counted quantities for a few items → Save → stock and P&L (closing stock)
+   change accordingly; the adjustment appears in Vouchers as ADJ/…
+3. With one business: sign out and in → you land directly in it.
+4. Create a second business → "Your businesses" shows both with today's/month's sales and totals; the books,
+   numbering and items of the two are completely separate.
+
 ## Notifications and reminders
 1. As owner, invite a cashier; when they join, 🔔 shows "… joined as cashier".
 2. As the cashier, make a sale that takes an item to its reorder level → accountants/owner see "Low stock".

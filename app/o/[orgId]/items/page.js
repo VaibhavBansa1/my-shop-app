@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { api } from '../../../ui/api.js';
 import { useApi, Loading, ErrorNote, PageHead, Field, Empty } from '../../../ui/components.js';
 import { useOrg } from '../../../ui/OrgContext.js';
@@ -8,7 +9,7 @@ import { money, qty } from '../../../ui/format.js';
 const blank = { name: '', sku: '', unitId: '', hsnCode: '', gstRate: '', salePrice: '', purchasePrice: '', reorderLevel: '', openingQty: '', openingRate: '' };
 
 export default function Items() {
-  const { org, can } = useOrg();
+  const { org, can, base } = useOrg();
   const [q, setQ] = useState('');
   const list = useApi(() => api(`/orgs/${org.id}/items`, { query: { q } }), [org.id, q]);
   const units = useApi(() => api(`/orgs/${org.id}/units`), [org.id]);
@@ -40,7 +41,11 @@ export default function Items() {
   return (
     <>
       <PageHead title="Stock items" sub={`${items.length} items · stock is updated by every sale and purchase`}
-        actions={can('masters.write') && <button className="btn btn-primary" onClick={() => startEdit(null)}>+ New item</button>} />
+        actions={<>
+          {can('masters.write') && <Link className="btn" href={`${base}/import?kind=items`}>Import CSV</Link>}
+          {can('voucher.create.stock_adjustment') && <Link className="btn" href={`${base}/items/count`}>Count stock</Link>}
+          {can('voucher.create.stock_adjustment') && <Link className="btn" href={`${base}/vouchers/new?type=stock_adjustment`}>Adjust stock</Link>}
+          {can('masters.write') && <button className="btn btn-primary" onClick={() => startEdit(null)}>+ New item</button>}</>} />
       {editing && (
         <form className="card grid" onSubmit={save}>
           <h2>{editing === 'new' ? 'New item' : `Edit ${editing.name}`}</h2>

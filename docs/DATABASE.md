@@ -102,3 +102,6 @@ users ──< memberships >── organizations ──< invitations
 | 009_org_ai_setting | `organizations.ai_enabled` opt-in |
 | 010_notifications | `notifications` (per recipient, RLS), `memberships.notify_email`, `organizations.upi_id`, join alerts, job helpers |
 | 011_fix_upi_check | UPI ID check within Postgres regex limits |
+| 012_encrypted_contact_fields | contact fields hold ciphertext (`enc:v1:…`); limits moved to the API |
+| 013_stock_adjustment_type | new voucher type `stock_adjustment` |
+| 014_stock_adjustment_rules | balance trigger: adjustments have item lines and no ledger entries |

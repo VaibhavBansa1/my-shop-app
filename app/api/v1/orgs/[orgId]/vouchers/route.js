@@ -18,8 +18,11 @@ export const GET = route(async ({ request, db }) => {
 }, { action: 'vouchers.read' });
 
 export const POST = route(async ({ request, db, role }) => {
-  const body = voucherSchema.parse(await readJson(request));
-  if (!can(role, `voucher.create.${body.type}`)) throw forbidden(`Your role cannot create ${body.type.replace('_', ' ')} vouchers.`);
-  if (body.replacesVoucherId && !can(role, 'voucher.cancel')) throw forbidden('Your role cannot correct (cancel) vouchers.');
+  const raw = await readJson(request);
+  // Permission first (by type), then full validation: people without access learn nothing else.
+  const type = voucherSchema.shape.type.parse(raw?.type);
+  if (!can(role, `voucher.create.${type}`)) throw forbidden(`Your role cannot create ${type.replace('_', ' ')} vouchers.`);
+  if (raw?.replacesVoucherId && !can(role, 'voucher.cancel')) throw forbidden('Your role cannot correct (cancel) vouchers.');
+  const body = voucherSchema.parse(raw);
   return json(await createVoucher(db, body), 201);
 }, { action: 'vouchers.read' });

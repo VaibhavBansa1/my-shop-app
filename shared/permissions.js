@@ -19,6 +19,7 @@ const MIN_ROLE = {
   'voucher.create.journal': 'accountant',
   'voucher.create.credit_note': 'accountant',
   'voucher.create.debit_note': 'accountant',
+  'voucher.create.stock_adjustment': 'accountant',
   'voucher.cancel': 'accountant',
   'masters.write': 'accountant',
   'members.read': 'admin',

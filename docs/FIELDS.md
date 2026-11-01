@@ -96,6 +96,26 @@ cancelled with "replaced by …" in the same step.
 
 ---
 
+## Stock adjustment
+| Field | Req? | Why |
+|---|---|---|
+| Reason (narration) | **Req** | An adjustment changes stock without a sale or purchase; the reason is the audit trail ("3 bags damaged by rain"). |
+| Item, quantity, In/Out | **Req** | What moved and which way. |
+| Rate | Opt | Defaults to the item's purchase price (cost). |
+
+## CSV import columns
+**Items:** `name` (Req), `sku`, `unit` (default pcs; must be an existing unit symbol), `hsn`, `gst_rate`,
+`sale_price`, `purchase_price`, `reorder_level`, `opening_qty`, `opening_rate` (defaults to purchase price).
+Common alternative headers are understood (e.g. *Item Name, Price, MRP, Cost, Opening Stock, GST*). Amounts
+may contain ₹ and commas.
+
+**Customers & suppliers:** `name` (Req), `type` (customer/supplier, default customer), `phone`, `email`,
+`gstin` (checked), `state_code` (2 digits), `address`, `opening_balance` (customer: what they owe you;
+supplier: what you owe them — enter a positive number for both).
+
+Rules: same name twice in a file → error; name already in the business → error, or skipped if you tick
+"skip existing"; any error → nothing is imported.
+
 ## Team
 
 | Field | Req? | Why |

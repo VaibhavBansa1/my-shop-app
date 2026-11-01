@@ -54,6 +54,7 @@ Dates are `YYYY-MM-DD`.
 | GET | `/orgs/{org}/reports/{name}` | viewer | `dashboard, trial-balance, profit-loss, balance-sheet, day-book, stock-summary, gst-summary, outstanding (?kind=receivable|payable), ledger (?ledger=)`; `?from=&to=` |
 | GET | `/orgs/{org}/audit` | admin | `?before=&limit=` |
 | GET | `/orgs/{org}/export` | admin | complete JSON backup of the business (download) |
+| POST | `/orgs/{org}/import/{items|parties}` | accountant | `{rows:[{…}], dryRun, skipExisting}` — rows keyed by CSV header; dry run returns errors by row; real import is all-or-nothing; ≤ 5000 rows, ≤ 4 MB |
 | GET | `/orgs/{org}/notifications` | viewer | your inbox: `?unread=1&limit=`; returns `{unread, notifications[]}` |
 | POST | `/orgs/{org}/notifications/read` | viewer | `{ids:[…]}` or `{all:true}` |
 | GET/PATCH | `/orgs/{org}/notification-settings` | viewer | `{notifyEmail}` — daily summary by email |
@@ -83,6 +84,9 @@ Accounting voucher (receipt, payment, contra, journal):
 **Correcting a voucher:** add `"replacesVoucherId": "<id>"` (same type, must be posted; needs the
 `voucher.cancel` permission). The new voucher is posted and the original is cancelled with the reason
 "Corrected: replaced by …" in one transaction.
+
+**Stock adjustment:** `{"type": "stock_adjustment", "date", "narration": "reason (required)", "items": [{"stockItemId", "qty", "direction": "in"|"out", "rate"?}]}` —
+no ledger lines; valued at cost (purchase price) unless `rate` is given. Accountant and above.
 
 Debits must equal credits. Receipts must debit cash/bank; payments must credit cash/bank;
 contra only between cash/bank ledgers.

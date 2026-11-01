@@ -9,9 +9,13 @@ work in a private space isolated at the database level.
 ![Dashboard on a phone](docs/screenshots/dashboard-phone-light.png)
 
 ## Features
+Full checklist: [docs/FEATURES.md](docs/FEATURES.md). Privacy and encryption: [docs/DATA_PROTECTION.md](docs/DATA_PROTECTION.md).
+
 - Sign up / sign in, multiple businesses per user, invite staff (owner, admin, accountant, cashier, viewer)
 - Chart of accounts seeded like Tally (groups and ledgers), customers and suppliers with GSTIN/state
-- Stock items with units, HSN, GST rate, prices, reorder level, opening stock
+- Stock items with units, HSN, GST rate, prices, reorder level, opening stock; stock adjustments and physical counts
+- **Import** items and customers/suppliers from CSV; **export** reports to CSV and the whole business as a JSON backup
+- One person can run **one or many firms**, each with separate books; overview of all firms
 - Vouchers: Sales, Purchase, Receipt, Payment, Contra, Journal, Credit Note, Debit Note — double entry,
   always balanced, gap-free numbering per financial year, cancel (never delete)
 - GST: CGST+SGST or IGST by place of supply, round-off, printable tax invoice
@@ -90,7 +94,7 @@ See [docs/MOBILE.md](docs/MOBILE.md). In short: `cd mobile && npm install && npx
 ## Deploying
 Any Node host plus managed Postgres. Set `DATABASE_URL` (shop_app role), `DATABASE_OWNER_URL`
 (for migrations only), `APP_ORIGIN=https://your-domain`, `NODE_ENV=production`, and `TRUST_PROXY=1`
-if behind a proxy/load balancer. Configure email (docs/EMAIL.md) and optionally AI (docs/AI.md);
+if behind a proxy/load balancer. **Set `DATA_ENCRYPTION_KEY`** (keep a copy safe). Configure email (docs/EMAIL.md) and optionally AI (docs/AI.md);
 every setting is explained in `.env.example`.
 Run `npm run db:migrate` on each deploy, then `npm run build && npm start`, and schedule
 `npm run db:cleanup` daily.

@@ -10,7 +10,7 @@ const fs = require('fs');
   await page.fill('input[type=email]', `csv${Date.now()}@example.com`);
   await page.fill('input[type=password]', 'csv tester password');
   await page.click('button:has-text("Create account")');
-  await page.waitForURL('**/orgs');
+  await page.waitForURL('**/orgs**');
   await page.click('text=+ Create a new business');
   await page.fill('form input >> nth=0', '=Evil Shop');
   await page.click('button:has-text("Create")');

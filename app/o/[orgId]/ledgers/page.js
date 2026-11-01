@@ -41,7 +41,9 @@ export default function Ledgers() {
   return (
     <>
       <PageHead title="Parties & ledgers" sub="Customers, suppliers, cash, bank, income and expense accounts"
-        actions={can('party.create') && <button className="btn btn-primary" onClick={() => setOpen(!open)}>+ New ledger</button>} />
+        actions={<>
+          {can('masters.write') && <Link className="btn" href={`${base}/import?kind=parties`}>Import CSV</Link>}
+          {can('party.create') && <button className="btn btn-primary" onClick={() => setOpen(!open)}>+ New ledger</button>}</>} />
       {open && (
         <form className="card grid" onSubmit={create}>
           <ErrorNote error={error} />

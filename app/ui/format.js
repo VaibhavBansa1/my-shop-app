@@ -12,6 +12,6 @@ export const today = () => new Date().toISOString().slice(0, 10);
 export const monthStart = () => `${today().slice(0, 8)}01`;
 export const VOUCHER_TYPES = {
   sales: 'Sales', purchase: 'Purchase', receipt: 'Receipt', payment: 'Payment', contra: 'Contra',
-  journal: 'Journal', credit_note: 'Credit Note', debit_note: 'Debit Note',
+  journal: 'Journal', credit_note: 'Credit Note', debit_note: 'Debit Note', stock_adjustment: 'Stock Adjustment',
 };
 export const ROLE_LABEL = { owner: 'Owner', admin: 'Admin', accountant: 'Accountant', cashier: 'Cashier', viewer: 'Viewer' };

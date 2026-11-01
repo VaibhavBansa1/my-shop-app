@@ -13,6 +13,7 @@ npm install --no-save playwright && npx playwright install chromium
 | `correct-walk.cjs` | correct a bill: original cancelled, replacement posted |
 | `csv-walk.cjs` | CSV download from reports |
 | `notify-walk.cjs` | UPI ID, low-stock alert + unread badge, Receivables → Remind → WhatsApp link, last reminded |
+| `inventory-walk.cjs` | CSV import with a bad row then fixed, stock count adjustment, multi-firm overview, single-firm sign-in goes straight in |
 | `ai-walk.cjs` | needs `EMAIL_PROVIDER=log`, `EMAIL_VERIFICATION=required`, AI configured, and the server log path in `SERVER_LOG`: verification gate, emailed link, AI summary, invitation email |
 
 ```bash

@@ -9,7 +9,7 @@ const OUT = require('path').join(__dirname, '..', 'docs', 'screenshots');
   await page.fill('input[type=email]', `scan${Date.now()}@example.com`);
   await page.fill('input[type=password]', 'scan tester password');
   await page.click('button:has-text("Create account")');
-  await page.waitForURL('**/orgs');
+  await page.waitForURL('**/orgs**');
   await page.click('text=+ Create a new business');
   await page.fill('form input >> nth=0', 'Scan Store');
   await page.fill('form input >> nth=1', '23ABCDE1234F1Z8');

@@ -1,9 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '../ui/api.js';
 import { useApi, Field, ErrorNote, Loading } from '../ui/components.js';
-import { ROLE_LABEL } from '../ui/format.js';
+import { ROLE_LABEL, money } from '../ui/format.js';
 import { STATE_LIST } from '../ui/states.js';
 
 export default function OrgsPage() {
@@ -27,8 +27,20 @@ export default function OrgsPage() {
   }
   async function logout() { await api('/auth/logout', { method: 'POST' }); window.location.href = '/'; }
 
-  if (me.loading) return <Loading />;
   const orgs = me.data?.orgs ?? [];
+  // One business: go straight in after sign-in. Several: show an overview of all of them.
+  const [overview, setOverview] = useState({});
+  useEffect(() => {
+    if (!me.data) return;
+    if (orgs.length === 1 && new URLSearchParams(window.location.search).get('auto') === '1') { window.location.replace(`/o/${orgs[0].id}`); return; }
+    if (orgs.length > 1) {
+      Promise.all(orgs.map((o) => api(`/orgs/${o.id}/reports/dashboard`).then((d) => [o.id, d]).catch(() => [o.id, null])))
+        .then((pairs) => setOverview(Object.fromEntries(pairs)));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me.data]);
+  if (me.loading) return <Loading />;
+  const totals = Object.values(overview).filter(Boolean).reduce((a, d) => ({ today: a.today + d.today.sales, month: a.month + (d.month.sales?.total ?? 0), cash: a.cash + d.cashAndBank }), { today: 0, month: 0, cash: 0 });
   return (
     <div className="public">
       <header className="public-top">
@@ -41,9 +53,17 @@ export default function OrgsPage() {
           <h1 style={{ marginBottom: 12 }}>Your businesses</h1>
           {orgs.length === 0 && <p className="muted">You don’t have a business yet. Create one below, or open an invitation link from your employer.</p>}
           <div className="grid">
-            {orgs.map((o) => (
-              <Link key={o.id} href={`/o/${o.id}`} className="org-switch">{o.name}<small>{ROLE_LABEL[o.role]}{o.gstin ? ` · GSTIN ${o.gstin}` : ''}</small></Link>
-            ))}
+            {orgs.map((o) => {
+              const d = overview[o.id];
+              return (
+                <Link key={o.id} href={`/o/${o.id}`} className="org-switch">{o.name}<small>{ROLE_LABEL[o.role]}{o.gstin ? ` · GSTIN ${o.gstin}` : ''}</small>
+                  {d && <small>Today {money(d.today.sales)} · This month {money(d.month.sales?.total ?? 0)} · Cash &amp; bank {money(d.cashAndBank)}</small>}</Link>
+              );
+            })}
+            {orgs.length > 1 && Object.keys(overview).length > 0 && (
+              <p className="muted" style={{ fontSize: 14 }}>All businesses: today {money(totals.today)} · this month {money(totals.month)} · cash &amp; bank {money(totals.cash)}.
+                Each business keeps separate books, numbering and GST.</p>
+            )}
           </div>
         </div>
         <div className="card">

@@ -134,6 +134,13 @@ your accountant files them.
 **Stock on hand** — Never typed in: always calculated from opening stock plus purchases and returns minus
 sales. That is why it can never "drift".
 
+**Stock adjustment (ADJ)** — A record that stock went out (damaged, expired, lost, given free) or came in
+(found, received free) without a sale or purchase. Needs a reason. Its cost shows in profit through closing stock.
+
+**Count stock** — Type the quantity physically on the shelf; the app records the differences as one adjustment.
+
+**Import (CSV)** — Load many items or customers/suppliers at once from a spreadsheet saved as CSV.
+
 **Average cost / stock value** — Stock is valued at the weighted average purchase cost. Closing stock
 value appears in Profit & Loss and the Balance Sheet.
 

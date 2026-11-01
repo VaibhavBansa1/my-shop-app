@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { STATE_LIST } from '../../../shared/states.js';
 import { isValidGstin } from '../../../shared/gstin.js';
 import { api } from '../lib/api.js';
 import { useSession } from '../lib/session.js';
-import { ROLE_LABEL } from '../lib/format.js';
+import { ROLE_LABEL, money } from '../lib/format.js';
 import { Button, Card, ErrorNote, Field, Note, Picker, Row, Screen, T } from '../components/ui.js';
 
 export default function Orgs() {
@@ -19,6 +19,13 @@ export default function Orgs() {
   const gstinBad = f.gstin.trim() && !isValidGstin(f.gstin.trim().toUpperCase());
 
   async function open(id) { await s.selectOrg(id); router.replace('/home'); }
+  // Several businesses: show today's sales for each.
+  const [overview, setOverview] = useState({});
+  useEffect(() => {
+    if (s.orgs.length < 2) return;
+    Promise.all(s.orgs.map((o) => api.get(`/orgs/${o.id}/reports/dashboard`).then((d) => [o.id, d]).catch(() => [o.id, null])))
+      .then((p) => setOverview(Object.fromEntries(p)));
+  }, [s.orgs]);
   async function create() {
     setBusy(true); setError(null);
     try {
@@ -42,7 +49,9 @@ export default function Orgs() {
         )}
         {s.orgs.length > 0 && (
           <Card>
-            {s.orgs.map((o) => <Row key={o.id} title={o.name} subtitle={`${ROLE_LABEL[o.role]}${o.gstin ? ` · GSTIN ${o.gstin}` : ''}`} right="›" onPress={() => open(o.id)} />)}
+            {s.orgs.map((o) => <Row key={o.id} title={o.name}
+              subtitle={`${ROLE_LABEL[o.role]}${o.gstin ? ` · GSTIN ${o.gstin}` : ''}${overview[o.id] ? `\nToday ${money(overview[o.id].today.sales)} · Month ${money(overview[o.id].month.sales?.total ?? 0)}` : ''}`}
+              right="›" onPress={() => open(o.id)} />)}
           </Card>
         )}
         {s.orgs.length === 0 && <T muted style={{ marginBottom: 12 }}>You don’t have a business yet. Create one, or ask your employer to invite your email and sign in again.</T>}

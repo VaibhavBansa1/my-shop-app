@@ -36,6 +36,9 @@
 | AI data exposure | Off by default (server + per business); facts only; names hidden from cloud models by default; no narrations/contacts; audit entry per request | `lib/services/aiSummary.js`, ADR-0008 |
 | AI prompt injection | Model has no tools and no data access; facts wrapped and declared as data; output rendered as plain text | `lib/services/aiSummary.js` |
 | SSRF via AI | AI base URL comes only from server env, https required for non-local hosts, redirects refused | `lib/ai/index.js` |
+| Stolen database / backup | Contact details (phone, email, address) encrypted with AES-256-GCM (`DATA_ENCRYPTION_KEY`); passwords and tokens hashed; see DATA_PROTECTION.md | `lib/crypto.js` |
+| Import abuse | 5000 rows / 4 MB max, every row validated like a form, one transaction, audited | `lib/services/importData.js` |
+| Leaking details to unauthorised users | Voucher creation checks permission before validating the body | `app/api/v1/orgs/[orgId]/vouchers/route.js` |
 | Notification privacy | Rows belong to one recipient; RLS limits read/update to `user_id = app.user_id` in the current business; app cannot delete or edit text; links must be in-app paths (CHECK constraint) | `010_notifications.sql` |
 | Customer spam via reminders | 3 per customer per day, 200 per business per day; only to the customer's saved contact; audited | `lib/services/reminders.js` |
 | Injection into shared PDFs | Invoice HTML escapes every value and carries a deny-all CSP | `mobile/src/lib/invoiceHtml.js` |

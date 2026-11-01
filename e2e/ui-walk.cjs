@@ -20,7 +20,7 @@ async function pick(loc, text) {
   await page.fill('input[type=email]', email);
   await page.fill('input[type=password]', 'demo shop password');
   await page.click('button:has-text("Create account")');
-  await page.waitForURL('**/orgs');
+  await page.waitForURL('**/orgs**');
   await page.click('text=+ Create a new business');
   await page.fill('form input >> nth=0', 'Bansal General Store');
   await page.fill('form input >> nth=1', '23ABCDE1234F1Z8');

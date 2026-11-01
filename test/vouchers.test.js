@@ -230,3 +230,37 @@ test('field rules: duplicate supplier bill, far-future dates, opening rate defau
   await assert.rejects(updateOrg(db, { stateCode: '27' }), /does not match/);
   await assert.rejects(m.updateLedger(db, f.supplier.id, { gstin: '27AAACR5055K1Z7' }), /does not match/);
 });
+
+test('stock adjustments: quantity moves, profit reflects the loss, GST untouched, cancel restores', async () => {
+  const { createVoucher, cancelVoucher } = await import('../lib/services/vouchers.js');
+  const R = await import('../lib/services/reports.js');
+  const { withOrg } = await import('../lib/db.js');
+  const { db } = await makeUserOrg();
+  const f = await fixtures(db); // rice: opening 10 @ 400
+  const plBefore = await R.profitLoss(db, { from: '2026-04-01', to: '2026-05-31' });
+  await assert.rejects(createVoucher(db, { ...base, type: 'stock_adjustment', date: '2026-05-03', items: [{ stockItemId: f.rice.id, qty: 2, direction: 'out' }] }), /reason/);
+  await assert.rejects(createVoucher(db, { ...base, type: 'stock_adjustment', date: '2026-05-03', narration: 'x', items: [{ stockItemId: f.rice.id, qty: 2 }] }), /in or out/);
+  const adj = await createVoucher(db, { ...base, type: 'stock_adjustment', date: '2026-05-03', narration: 'Damaged in rain',
+    items: [{ stockItemId: f.rice.id, qty: 2, direction: 'out' }, { stockItemId: f.sugar.id, qty: '1.5', direction: 'in', rate: 40 }] });
+  assert.equal(adj.label, 'ADJ/26-27/1');
+  assert.equal(adj.total, 0);
+  assert.equal(adj.entries.length, 0);
+  const stock = await R.stockSummary(db, { to: '2026-05-31' });
+  assert.equal(stock.items.find((i) => i.name === 'Basmati Rice 5kg').qty, 8);
+  assert.equal(stock.items.find((i) => i.name === 'Sugar').qty, 1.5);
+  const pl = await R.profitLoss(db, { from: '2026-04-01', to: '2026-05-31' });
+  assert.equal(Math.round((plBefore.closingStock - pl.closingStock) * 100) / 100, 800 - 1.5 * 42, 'closing stock falls by the damaged rice at cost, rises by found sugar');
+  assert.equal(pl.grossProfit, Math.round((plBefore.grossProfit - 800 + 63) * 100) / 100);
+  const bs = await R.balanceSheet(db, { to: '2026-05-31' });
+  assert.equal(bs.totalAssets, bs.totalLiabilities, 'balance sheet still balances');
+  const gst = await R.gstSummary(db, { from: '2026-04-01', to: '2026-05-31' });
+  assert.equal(gst.inward.length + gst.outward.length, 0, 'adjustments are not GST supplies');
+  await cancelVoucher(db, adj.id, 'entered by mistake');
+  assert.equal((await R.stockSummary(db, { to: '2026-05-31' })).items.find((i) => i.name === 'Basmati Rice 5kg').qty, 10);
+  // The database refuses an adjustment with ledger entries.
+  await assert.rejects(withOrg(db, async (c) => {
+    const { rows } = await c.query(`insert into vouchers (org_id, type, fy_start, number, date, created_by) values ($1, 'stock_adjustment', '2026-04-01', 99, '2026-05-01', $2) returning id`, [db.orgId, db.userId]);
+    await c.query(`insert into voucher_items (org_id, voucher_id, line_no, stock_item_id, qty, rate, taxable_value, stock_qty) values ($1, $2, 1, $3, 1, 1, 0, -1)`, [db.orgId, rows[0].id, f.rice.id]);
+    await c.query(`insert into voucher_entries (org_id, voucher_id, line_no, ledger_id, amount) values ($1, $2, 1, $3, 5), ($1, $2, 2, $4, -5)`, [db.orgId, rows[0].id, f.code('cash'), f.code('sales')]);
+  }), /no ledger entries/);
+});

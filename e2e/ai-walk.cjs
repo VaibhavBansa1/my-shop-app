@@ -13,7 +13,7 @@ async function pick(loc, text) { const v = await loc.evaluate((el, t) => [...el.
   await page.fill('input[type=email]', email);
   await page.fill('input[type=password]', 'papa shop password');
   await page.click('button:has-text("Create account")');
-  await page.waitForURL('**/orgs');
+  await page.waitForURL('**/orgs**');
   await page.waitForSelector('text=Please confirm your email address');
   await page.click('text=+ Create a new business');
   await page.fill('form input >> nth=0', 'Papa Kirana');

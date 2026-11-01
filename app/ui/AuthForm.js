@@ -5,10 +5,11 @@ import { api } from './api.js';
 import { Field, ErrorNote } from './components.js';
 
 function safeNext() {
-  if (typeof window === 'undefined') return '/orgs';
+  // Default: the business list, which opens your business directly when you have only one.
+  if (typeof window === 'undefined') return '/orgs?auto=1';
   const n = new URLSearchParams(window.location.search).get('next');
   // Only allow same-site relative paths (prevents open redirects).
-  return n && n.startsWith('/') && !n.startsWith('//') && !n.startsWith('/\\') ? n : '/orgs';
+  return n && n.startsWith('/') && !n.startsWith('//') && !n.startsWith('/\\') ? n : '/orgs?auto=1';
 }
 
 export default function AuthForm({ mode }) {

@@ -66,7 +66,12 @@ export default function VoucherView({ params }) {
           {d.placeOfSupply && <span className="muted"> · Place of supply {d.placeOfSupply} {STATES[d.placeOfSupply] ?? ''}</span>}</p>}
         {d.reference && <p className="muted">Ref: {d.reference}</p>}
 
-        {isInvoice ? (
+        {d.type === 'stock_adjustment' ? (
+          <div className="table-wrap" style={{ marginTop: 12 }}><table>
+            <thead><tr><th>#</th><th>Item</th><th className="num">In / out</th><th className="num">At cost</th></tr></thead>
+            <tbody>{d.items.map((i, n) => <tr key={n}><td>{n + 1}</td><td>{i.name}</td><td className="num">{i.stockQty > 0 ? '+' : '−'}{qty(Math.abs(i.stockQty))} {i.unit}</td><td className="num">{amount(i.rate)}</td></tr>)}</tbody>
+          </table></div>
+        ) : isInvoice ? (
           <div className="table-wrap" style={{ marginTop: 12 }}><table>
             <thead><tr><th>#</th><th>Item</th><th>HSN</th><th className="num">Qty</th><th className="num">Rate</th><th className="num">Disc.</th><th className="num">Taxable</th><th className="num">GST %</th><th className="num">{inter ? 'IGST' : 'CGST + SGST'}</th></tr></thead>
             <tbody>{d.items.map((i, n) => (

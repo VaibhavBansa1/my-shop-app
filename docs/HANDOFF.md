@@ -20,8 +20,11 @@ This file lets anyone (you on your PC, or a new Claude session) continue the wor
 - JSON backup export per business (Settings → Download backup).
 - Notifications (cancelled bills, low stock, new members, daily summary via `npm run notify:daily`) and
   payment reminders by WhatsApp/SMS/email with UPI ID — docs/NOTIFICATIONS.md. Camera permission verified.
+- CSV import (items, customers/suppliers) with preview and all-or-nothing save; stock adjustments and
+  physical stock count (migrations 013/014); contact details encrypted with AES-256-GCM (migration 012,
+  `DATA_ENCRYPTION_KEY` required in production); one-firm auto-open and multi-firm overview.
 - Password reset by email (Resend via env, dev logs the link); `npm run db:cleanup` for a daily cron.
-- Tests: `npm test` (58, incl. notifications and reminders, role x endpoint matrix, OCR on a real image, AI with a fake model server, real SMTP delivery), `npm run smoke` (27 HTTP checks incl. the mobile flow).
+- Tests: `npm test` (65, incl. encryption, import, stock adjustments, notifications and reminders, role x endpoint matrix, OCR on a real image, AI with a fake model server, real SMTP delivery), `npm run smoke` (27 HTTP checks incl. the mobile flow).
 
 **Android app (`mobile/`)**
 - Expo SDK 58 app: sign in/up (+ forgot password), businesses, home, sell with exact GST preview, correct a bill, add stock items, vouchers with PDF share and

@@ -27,7 +27,8 @@ function VoucherForm() {
   const sp = useSearchParams();
   const allowed = Object.keys(VOUCHER_TYPES).filter((t) => can(`voucher.create.${t}`));
   const type = allowed.includes(sp.get('type')) ? sp.get('type') : allowed[0];
-  const isItem = ITEM_TYPES.includes(type);
+  const isAdj = type === 'stock_adjustment';
+  const isItem = ITEM_TYPES.includes(type) || isAdj;
   const masters = useApi(async () => {
     const [l, i, u] = await Promise.all([api(`/orgs/${org.id}/ledgers`), api(`/orgs/${org.id}/items`), api(`/orgs/${org.id}/units`)]);
     return { ledgers: l.ledgers.filter((x) => x.isActive), items: i.items.filter((x) => x.isActive), units: u.units };
@@ -93,10 +94,9 @@ function VoucherForm() {
     if (isItem) {
       body.partyLedgerId = head.partyLedgerId || null;
       if (head.placeOfSupply) body.placeOfSupply = head.placeOfSupply;
-      body.items = items.filter((l) => l.stockItemId).map((l) => ({
-        stockItemId: l.stockItemId, qty: l.qty, rate: l.rate || '0', discount: l.discount || '0',
-        ...(l.gstRate !== '' ? { gstRate: l.gstRate } : {}),
-      }));
+      body.items = items.filter((l) => l.stockItemId).map((l) => (isAdj
+        ? { stockItemId: l.stockItemId, qty: l.qty, direction: l.direction || 'out' }
+        : { stockItemId: l.stockItemId, qty: l.qty, rate: l.rate || '0', discount: l.discount || '0', ...(l.gstRate !== '' ? { gstRate: l.gstRate } : {}) }));
     } else if (mode === 'simple' && (type === 'receipt' || type === 'payment')) {
       const cb = { ledgerId: simple.cashBankLedgerId, [type === 'receipt' ? 'debit' : 'credit']: simple.amount };
       const pt = { ledgerId: simple.partyLedgerId, [type === 'receipt' ? 'credit' : 'debit']: simple.amount };
@@ -134,14 +134,14 @@ function VoucherForm() {
       )}
       <div className="card grid grid-3">
         <Field label="Date"><input type="date" required value={head.date} onChange={(e) => setHead({ ...head, date: e.target.value })} /></Field>
-        {isItem && (
+        {isItem && !isAdj && (
           <Field label={type === 'sales' || type === 'credit_note' ? 'Customer' : 'Supplier'} hint="Leave as Cash for a cash bill.">
             <select value={head.partyLedgerId} onChange={(e) => setHead({ ...head, partyLedgerId: e.target.value })}>
               <option value="">Cash</option>{ledgerOptions(parties.filter((p) => p.groupCode !== 'cash_in_hand'))}
             </select>
           </Field>
         )}
-        {isItem && gstOn && (
+        {isItem && !isAdj && gstOn && (
           <Field label="Place of supply" hint={inter ? 'Inter-state: IGST' : 'Same state: CGST + SGST'}>
             <select value={head.placeOfSupply} onChange={(e) => setHead({ ...head, placeOfSupply: e.target.value })}>
               <option value="">{pos ? `Auto (${pos})` : 'Auto'}</option>
@@ -155,6 +155,8 @@ function VoucherForm() {
       {isItem && (
         <div className="card">
           <h2>Items</h2>
+          {isAdj && <p className="muted" style={{ fontSize: 13 }}>Use <b>Out</b> for damaged, expired, lost or given-away stock, <b>In</b> for stock found or received free.
+            Valued at cost; the effect shows in Profit &amp; Loss through closing stock.</p>}
           {itemMap.size === 0 && <p className="note note-warn">No stock items yet. <Link href={`${base}/items`}>Add items</Link> first.</p>}
           <div className="lines">
             {items.map((l, i) => (
@@ -163,24 +165,30 @@ function VoucherForm() {
                   <option value="">Choose…</option>{[...itemMap.values()].map((it) => <option key={it.id} value={it.id}>{it.name}{it.stockQty !== undefined ? ` (${it.stockQty} ${it.unitSymbol})` : ''}</option>)}
                 </select></Field>
                 <Field label={`Qty${itemMap.get(l.stockItemId) ? ` (${itemMap.get(l.stockItemId).unitSymbol})` : ''}`}><input inputMode="decimal" required value={l.qty} onChange={(e) => setItem(i, 'qty', e.target.value)} /></Field>
+                {isAdj ? (<>
+                  <Field label="In / out"><select value={l.direction || 'out'} onChange={(e) => setItem(i, 'direction', e.target.value)}>
+                    <option value="out">Out (reduce stock)</option><option value="in">In (add stock)</option></select></Field>
+                  <span /><span />
+                </>) : (<>
                 <Field label="Rate"><input inputMode="decimal" required value={l.rate} onChange={(e) => setItem(i, 'rate', e.target.value)} /></Field>
                 <Field label="Discount ₹"><input inputMode="decimal" value={l.discount} onChange={(e) => setItem(i, 'discount', e.target.value)} placeholder="0" /></Field>
                 <Field label="GST %"><input inputMode="decimal" disabled={!gstOn} value={l.gstRate} onChange={(e) => setItem(i, 'gstRate', e.target.value)} placeholder={gstOn ? String(itemMap.get(l.stockItemId)?.gstRate ?? 0) : '0'} /></Field>
+                </>)}
                 <button type="button" className="btn btn-sm btn-danger" aria-label="Remove line" onClick={() => setItems(items.length > 1 ? items.filter((_, j) => j !== i) : items)}>✕</button>
-                <div className="line-total">Taxable {money(preview[i].taxable)}{gstOn ? ` · GST ${money(preview[i].tax)}` : ''}</div>
+                {!isAdj && <div className="line-total">Taxable {money(preview[i].taxable)}{gstOn ? ` · GST ${money(preview[i].tax)}` : ''}</div>}
               </div>
             ))}
           </div>
           <div className="row" style={{ marginTop: 10 }}>
             <button type="button" className="btn btn-sm" onClick={() => setItems([...items, { stockItemId: '', qty: '1', rate: '', discount: '', gstRate: '' }])}>+ Add item</button>
           </div>
-          <div className="totals" style={{ marginTop: 12 }}>
+          {!isAdj && <div className="totals" style={{ marginTop: 12 }}>
             <div><span>Taxable value</span><span className="num">{money(taxable)}</span></div>
             {gstOn && (inter ? <div><span>IGST</span><span className="num">{money(tax)}</span></div> : <>
               <div><span>CGST</span><span className="num">{money(tax / 2)}</span></div><div><span>SGST</span><span className="num">{money(tax / 2)}</span></div></>)}
             <div><span>Round off</span><span className="num">{money(rounded - exact)}</span></div>
             <div className="grand"><span>Total</span><span className="num">{money(rounded)}</span></div>
-          </div>
+          </div>}
         </div>
       )}
 
@@ -228,7 +236,7 @@ function VoucherForm() {
       )}
 
       <div className="card grid">
-        <Field label="Narration"><textarea maxLength={1000} value={head.narration} onChange={(e) => setHead({ ...head, narration: e.target.value })} /></Field>
+        <Field label={isAdj ? 'Reason (required)' : 'Narration'}><textarea maxLength={1000} required={isAdj} value={head.narration} onChange={(e) => setHead({ ...head, narration: e.target.value })} /></Field>
         <div className="row"><button className="btn btn-primary" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
           <Link className="btn" href={`${base}/vouchers`}>Cancel</Link></div>
       </div>
