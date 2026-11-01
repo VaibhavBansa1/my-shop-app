@@ -53,3 +53,32 @@ test('a user\'s own membership in org B is not affected by actions in org A', as
   assert.equal(mine.length, 2);
   assert.ok(mine.some((o) => o.id === b2.id && o.role === 'owner'));
 });
+
+test('owner can delete an organization; everything in it goes, other orgs untouched', async () => {
+  const O = await import('../lib/services/orgs.js');
+  const { createVoucher } = await import('../lib/services/vouchers.js');
+  const m = await import('../lib/services/masters.js');
+  const { withOrg } = await import('../lib/db.js');
+  const a = await makeUserOrg();
+  const b = await makeUserOrg();
+  const cash = (await m.listLedgers(a.db)).find((l) => l.code === 'cash').id;
+  const rent = (await m.listLedgers(a.db)).find((l) => l.code === 'rent').id;
+  await createVoucher(a.db, { type: 'payment', date: '2026-05-01', reference: '', narration: '', items: [],
+    entries: [{ ledgerId: rent, debit: 10 }, { ledgerId: cash, credit: 10 }] });
+  await assert.rejects(O.deleteOrg(a.db, 'wrong name'), /exactly/);
+  await O.deleteOrg(a.db, a.org.name);
+  assert.equal((await O.listMyOrgs(a.user.id)).length, 0);
+  const left = await withOrg(a.db, (c) => c.query('select count(*)::int n from vouchers'));
+  assert.equal(left.rows[0].n, 0);
+  assert.ok((await m.listLedgers(b.db)).length > 5);
+});
+
+test('built-in ledgers cannot be deactivated or renamed', async () => {
+  const m = await import('../lib/services/masters.js');
+  const a = await makeUserOrg();
+  const cash = (await m.listLedgers(a.db)).find((l) => l.code === 'cash').id;
+  await assert.rejects(m.updateLedger(a.db, cash, { isActive: false }), /Built-in/);
+  await assert.rejects(m.updateLedger(a.db, cash, { name: 'Petty' }), /Built-in/);
+  const u = await m.updateLedger(a.db, cash, { openingBalance: '100' });
+  assert.equal(u.openingBalance, 100);
+});

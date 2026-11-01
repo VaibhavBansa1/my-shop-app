@@ -13,7 +13,8 @@
     "start": "next start",
     "db:migrate": "node scripts/migrate.mjs",
     "test": "node --test --test-concurrency=1 \"test/**/*.test.js\"",
-    "lint": "next lint"
+    "db:setup": "bash scripts/db-setup.sh",
+    "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
     "next": "^16.4.3",

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../../../ui/api.js';
 import { useApi, Loading, ErrorNote, PageHead, Field, Empty } from '../../../ui/components.js';
 import { useOrg } from '../../../ui/OrgContext.js';
@@ -16,6 +16,11 @@ export default function Items() {
   const [form, setForm] = useState(blank);
   const [error, setError] = useState(null);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  // Default the unit to "pcs" as soon as units have loaded (the form may open first).
+  useEffect(() => {
+    const pcs = units.data?.units.find((u) => u.symbol === 'pcs')?.id;
+    if (editing === 'new' && !form.unitId && pcs) setForm((f) => ({ ...f, unitId: pcs }));
+  }, [editing, units.data, form.unitId]);
 
   function startEdit(it) {
     setEditing(it ?? 'new'); setError(null);

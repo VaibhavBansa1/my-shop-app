@@ -1,6 +1,9 @@
 const inr = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-export const money = (n, currency = 'INR') =>
-  currency === 'INR' ? `₹${inr.format(n ?? 0)}` : new Intl.NumberFormat('en-IN', { style: 'currency', currency }).format(n ?? 0);
+export const money = (n, currency = 'INR') => {
+  const v = n ?? 0;
+  const s = currency === 'INR' ? `₹${inr.format(Math.abs(v))}` : new Intl.NumberFormat('en-IN', { style: 'currency', currency }).format(Math.abs(v));
+  return v < 0 ? `−${s}` : s;
+};
 export const amount = (n) => inr.format(n ?? 0);
 export const qty = (n) => new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }).format(n ?? 0);
 const df = new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });

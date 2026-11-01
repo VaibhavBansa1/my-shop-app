@@ -35,12 +35,16 @@ function Body({ id, d, base }) {
       </table>
     );
   }
-  if (id === 'balance-sheet') return (
+  if (id === 'balance-sheet') return (<>
     <div className="grid grid-2">
       <div><h2>Liabilities</h2><table><Sections list={d.liabilities} base={base} /><tfoot><tr><td>Total</td><td className="num">{money(d.totalLiabilities)}</td></tr></tfoot></table></div>
       <div><h2>Assets</h2><table><Sections list={d.assets} base={base} /><tfoot><tr><td>Total</td><td className="num">{money(d.totalAssets)}</td></tr></tfoot></table></div>
     </div>
-  );
+    {d.liabilities.some((s) => s.group.startsWith('Difference')) && (
+      <p className="note note-warn" style={{ gridColumn: '1 / -1' }}>Your opening balances (including opening stock) do not add up to zero.
+        Usually this means the owner’s capital has not been entered yet: open the <b>Capital</b> ledger and set its opening balance (Credit) to this difference.</p>
+    )}
+  </>);
   if (id === 'trial-balance') return (
     <table><thead><tr><th>Ledger</th><th>Group</th><th className="num">Debit</th><th className="num">Credit</th></tr></thead>
       <tbody>{d.rows.map((r, i) => <tr key={i}><td>{r.ledgerId ? <Link href={`${base}/ledgers/${r.ledgerId}`}>{r.ledger}</Link> : r.ledger}</td><td className="muted">{r.group}</td><td className="num">{r.debit ? amount(r.debit) : ''}</td><td className="num">{r.credit ? amount(r.credit) : ''}</td></tr>)}</tbody>
@@ -85,7 +89,9 @@ export default function Reports() {
   const [to, setTo] = useState(today());
   const r = REPORTS.find((x) => x[0] === id);
   const path = id.startsWith('outstanding') ? 'outstanding' : id;
-  const data = useApi(() => api(`/orgs/${org.id}/reports/${path}`, { query: { ...(r[2] === 'range' ? { from } : {}), to, ...(r[3] ?? {}) } }), [org.id, id, from, to]);
+  // Tag results with the report id so a stale result is never drawn with another report's layout.
+  const data = useApi(async () => ({ id, d: await api(`/orgs/${org.id}/reports/${path}`, { query: { ...(r[2] === 'range' ? { from } : {}), to, ...(r[3] ?? {}) } }) }), [org.id, id, from, to]);
+  const current = data.data?.id === id ? data.data.d : null;
   return (
     <>
       <PageHead title={r[1]} sub={r[2] === 'range' ? `${date(from)} to ${date(to)}` : `As on ${date(to)}`} actions={<button className="btn no-print" onClick={() => window.print()}>Print</button>} />
@@ -96,7 +102,7 @@ export default function Reports() {
       </div>
       <div className="card">
         <ErrorNote error={data.error} />
-        {data.loading && !data.data ? <Loading /> : data.data && <div className="table-wrap"><Body id={id} d={data.data} base={base} /></div>}
+        {!current ? (!data.error && <Loading />) : <div className="table-wrap"><Body id={id} d={current} base={base} /></div>}
       </div>
     </>
   );
