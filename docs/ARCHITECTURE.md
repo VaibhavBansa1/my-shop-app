@@ -2,8 +2,8 @@
 
 A Tally-style accounting, inventory and GST billing app for shops. It runs in any
 browser (phone or computer). Any business in the world can sign up, create its own
-organization, invite staff, and work in an isolated, secure space. A native mobile
-app can come later on top of the same API.
+organization, invite staff, and work in an isolated, secure space. An Android app
+(Expo, in `mobile/`) uses the same API. Supplier invoices can be scanned (OCR) on the phone or online.
 
 This document is the source of truth for the design. Decisions with real trade-offs
 are recorded as ADRs in [`docs/adr/`](adr/). The database is described table by
@@ -27,6 +27,8 @@ table in [`DATABASE.md`](DATABASE.md), and the security model in
 | GST (India) | Per-line GST rate. Intra-state → CGST + SGST; inter-state → IGST, decided from the organization's state and the place of supply. |
 | Reports | Day Book, Ledger statement, Trial Balance, Profit & Loss, Balance Sheet, Stock Summary, GST summary (outward/inward tax by rate), Outstanding receivables/payables. |
 | Audit | Every create/update/cancel is written to an append-only audit log. |
+| Invoice scanning | Photo of a supplier invoice → OCR (on phone or server) → reviewed purchase draft → purchase voucher. See [OCR.md](OCR.md). |
+| Android app | Sell, receipts/expenses, vouchers with PDF share, stock, parties, reports, invoice scanning. See [MOBILE.md](MOBILE.md). |
 
 ### Non-functional
 
@@ -51,7 +53,7 @@ table in [`DATABASE.md`](DATABASE.md), and the security model in
 ## 2. High-level design
 
 ```
-         Browser (phone / desktop)          Future native app (Android / iOS)
+         Browser (phone / desktop)          Android app (Expo, mobile/)
                     │  HTTPS, cookie session              │  HTTPS, Bearer token
                     ▼                                      ▼
    ┌──────────────────────────────────────────────────────────────────┐
@@ -63,7 +65,10 @@ table in [`DATABASE.md`](DATABASE.md), and the security model in
    │                           validation, error mapping, rate limit) │
    │                                   │                              │
    │                           lib/services  (business rules:         │
-   │                           vouchers, GST, reports, members)       │
+   │                           vouchers, GST, reports, members, OCR)  │
+   │                           shared/ (pure JS: GST, money, GSTIN,   │
+   │                           invoice parser) ◄── also bundled into  │
+   │                           the Expo app                           │
    │                                   │                              │
    │                           lib/db  withOrg(ctx, fn):              │
    │                             BEGIN; SET LOCAL app.org_id,         │
@@ -209,7 +214,24 @@ expected size. Things we would add later, in this order:
 
 ---
 
+### 3.8 Code layout
+
+```
+app/            Next.js pages (web UI) and app/api/v1 route handlers (thin)
+lib/            server-only: db context, http wrapper, auth, services/*
+shared/         pure JS used by server, web and mobile (no Node/DOM/RN APIs)
+db/migrations/  numbered SQL migrations (never edit an applied one)
+mobile/         Expo app (own package.json); imports ../shared via Metro
+test/           node:test integration tests against real Postgres as shop_app
+scripts/        migrate, db-setup, smoke (HTTP end-to-end)
+docs/           this documentation
+```
+
 ## 4. Scale and reliability
+
+**OCR load.** Tesseract is CPU-bound (~1 s per invoice photo on one core); one job runs at a time
+per process. Phones with ML Kit do the OCR themselves and only send text. Scale OCR by running more
+processes or moving it to a worker queue.
 
 **Load estimate.** 10,000 orgs × 50 vouchers/day = 500k vouchers/day ≈ 6/s average,
 maybe 60/s peak. Each voucher ≈ 1 voucher row + ~4 entries + ~3 items ≈ 1–2 KB.

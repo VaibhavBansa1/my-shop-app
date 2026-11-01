@@ -1,10 +1,10 @@
 # My Shop App
 
-Tally-style **accounting, inventory and GST billing** for shops, as a web app that works on
-phones and computers. Anyone can sign up, create their business, invite staff with roles, and
+Tally-style **accounting, inventory and GST billing** for shops: a web app that works on
+phones and computers, plus an **Android app** (Expo) in [`mobile/`](mobile/). Anyone can sign up, create their business, invite staff with roles, and
 work in a private space isolated at the database level.
 
-**Stack:** Next.js 16 (App Router) · PostgreSQL 14+ with Row-Level Security · `pg` · zod · Node 20+.
+**Stack:** Next.js 16 (App Router) · PostgreSQL 14+ with Row-Level Security · `pg` · zod · Tesseract · Node 20+ · Expo SDK 58 (Android).
 
 ![Dashboard on a phone](docs/screenshots/dashboard-phone-light.png)
 
@@ -17,7 +17,8 @@ work in a private space isolated at the database level.
 - GST: CGST+SGST or IGST by place of supply, round-off, printable tax invoice
 - Reports: Day Book, Ledger, Trial Balance, Profit & Loss, Balance Sheet, Stock Summary, GST Summary,
   Receivables / Payables, dashboard
-- Audit log of every change; REST API ready for a native app
+- **Scan supplier invoices** (OCR on the phone or on the server) into reviewed purchase entries
+- Audit log of every change; one REST API for the website and the Android app
 
 ## Run it on your computer
 
@@ -63,12 +64,18 @@ Runs unit tests and integration tests against the `shop_test` database **as the 
 npm run smoke
 ```
 
+## Android app
+See [docs/MOBILE.md](docs/MOBILE.md). In short: `cd mobile && npm install && npx expo run:android`.
+
 ## Documentation
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — system design, requirements, trade-offs
 - [docs/DATABASE.md](docs/DATABASE.md) — every table and rule
 - [docs/SECURITY.md](docs/SECURITY.md) — threat model and controls
 - [docs/API.md](docs/API.md) — REST API for web and native apps
 - [docs/adr/](docs/adr/) — architecture decision records
+- [docs/MOBILE.md](docs/MOBILE.md) — Android app: run, build, security
+- [docs/OCR.md](docs/OCR.md) — invoice scanning
+- [docs/MANUAL_TESTING.md](docs/MANUAL_TESTING.md) — checklist for manual testing and owner decisions
 - [docs/HANDOFF.md](docs/HANDOFF.md) — current status and what to build next
 
 ## Deploying

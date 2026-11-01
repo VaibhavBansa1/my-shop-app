@@ -22,7 +22,7 @@ Dates are `YYYY-MM-DD`.
 
 | Method | Path | Role needed | Notes |
 |---|---|---|---|
-| POST | `/auth/signup` | — | `{name, email, password}` (password ≥ 10 chars) |
+| POST | `/auth/signup` | — | `{name, email, password, returnToken?}` (password ≥ 10 chars); `returnToken: true` returns `{token}` and sets no cookie (native apps) |
 | POST | `/auth/login` | — | `{email, password, returnToken?}` |
 | POST | `/auth/logout` | signed in | ends this session |
 | POST | `/auth/password` | signed in | `{currentPassword, newPassword}`; signs out other devices |
@@ -48,6 +48,8 @@ Dates are `YYYY-MM-DD`.
 | POST | `/orgs/{org}/vouchers/{id}/cancel` | accountant | `{reason}` |
 | GET | `/orgs/{org}/reports/{name}` | viewer | `dashboard, trial-balance, profit-loss, balance-sheet, day-book, stock-summary, gst-summary, outstanding (?kind=receivable|payable), ledger (?ledger=)`; `?from=&to=` |
 | GET | `/orgs/{org}/audit` | admin | `?before=&limit=` |
+| POST | `/orgs/{org}/ocr/invoice` | accountant | body = photo bytes, `Content-Type: image/jpeg` or `image/png`, ≤ 8 MB; returns a purchase draft. 60/hour per user |
+| POST | `/orgs/{org}/ocr/parse` | accountant | `{text}` (≤ 50,000 chars) from on-device OCR; returns a purchase draft. 300/hour per user |
 | GET | `/api/health` | — | DB health check |
 
 ### Creating vouchers
@@ -68,3 +70,15 @@ Accounting voucher (receipt, payment, contra, journal):
 ```
 Debits must equal credits. Receipts must debit cash/bank; payments must credit cash/bank;
 contra only between cash/bank ledgers.
+
+### Purchase draft (OCR response)
+```json
+{ "supplierGstin": "23AAACR5055K1ZF", "supplierName": "ANNAPURNA WHOLESALE TRADERS",
+  "supplier": { "ledgerId": "…", "name": "…" } | null,
+  "invoiceNumber": "AW/2026/0457", "invoiceDate": "2026-11-03", "interState": false,
+  "totals": { "taxable": 9805, "cgst": 245.13, "sgst": 245.12, "igst": null, "roundOff": -0.25, "total": 10295 },
+  "items": [ { "description": "Basmati Rice 5kg", "hsn": "1006", "qty": 10, "rate": 420, "amount": 4200, "discount": 0, "gstRate": 5,
+               "match": { "stockItemId": "…", "name": "…", "score": 0.83 } | null, "candidates": [ … ] } ],
+  "warnings": [ "…" ], "confidence": 1, "ocr": { "engine": "server-tesseract", "confidence": 91 } }
+```
+Nothing is saved by these endpoints. Create the purchase with `POST /vouchers` after review.

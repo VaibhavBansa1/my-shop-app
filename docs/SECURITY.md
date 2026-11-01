@@ -24,12 +24,19 @@
 | Oversized input | 256 KB JSON body limit, zod length limits, 15 s statement timeout | `lib/http.js`, `lib/validation.js`, `lib/db.js` |
 | Error leaks | Generic 500 with request id; details only in server logs | `lib/http.js` |
 | Open redirect | `?next=` accepts only same-site relative paths | `app/ui/AuthForm.js` |
+| Malicious uploads (OCR) | JPEG/PNG only by magic bytes (SVG/GIF refused), ≤ 8 MB, dimensions read from headers and capped at 40 MP before decoding (decompression bombs), ≥ 200 px, 45 s timeout, one job at a time, 60 images/hour/user; images never stored | `lib/services/ocr.js`, `app/api/v1/orgs/[orgId]/ocr/*` |
+| OCR data leaks | Matching of supplier/items runs under RLS; drafts are not stored; on-device OCR uploads text only; no third-party OCR service | `lib/services/ocr.js`, ADR-0007 |
+| GSTIN typos / spoofed scans | GSTIN check digit validated on every save and in the parser | `shared/gstin.js` |
+| Mobile token theft | Token in SecureStore (Keystore), device-only; cookies never used by the app; `allowBackup=false`; 401 wipes token | `mobile/src/lib/api.js` |
+| Mobile MITM | https required for the server address (http only for private LAN during testing) | `mobile/src/lib/url.js` |
+| Injection into shared PDFs | Invoice HTML escapes every value and carries a deny-all CSP | `mobile/src/lib/invoiceHtml.js` |
 
 ## Verified by tests
 `test/isolation.test.js` (raw SQL as the app role cannot cross tenants, cannot disable RLS,
 cannot delete vouchers/audit), `test/vouchers.test.js` (balance trigger, immutability),
-`test/members.test.js`, `test/auth.test.js`, and `scripts/smoke.mjs` over HTTP (CSRF,
-cross-org 404s, forged sessions, bearer flow).
+`test/members.test.js`, `test/auth.test.js`, `test/ocr.test.js` (upload guards, tenant-scoped matching),
+`test/invoiceParser.test.js` (hostile input), `mobile/test/pure.test.mjs` (URL policy, HTML escaping), and
+`scripts/smoke.mjs` over HTTP (CSRF, cross-org 404s, forged sessions, bearer flow, mobile flow, OCR).
 
 ## Known gaps / next steps
 - Email verification and password reset need an email provider (not set up yet).

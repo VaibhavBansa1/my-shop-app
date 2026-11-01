@@ -6,47 +6,46 @@ This file lets anyone (you on your PC, or a new Claude session) continue the wor
 
 ## Where things stand
 
-**Done and tested**
-- Architecture, database design, security model, API and 5 ADRs (`docs/`).
-- PostgreSQL schema with Row-Level Security multi-tenancy, double-entry vouchers, balance and
-  immutability triggers, audit log, least-privilege app role (`db/migrations/001–006`).
-- Services: accounts, organizations/members/invitations, masters, voucher engine with GST,
-  reports (`lib/services/`).
-- REST API v1 (`app/api/v1/`) used by the web UI; bearer tokens for native apps.
-- Mobile-first web UI (`app/`), light and dark mode, printable invoices.
-- 21 automated tests (`npm test`) + 18 HTTP smoke checks (`npm run smoke`); CI workflow in
-  `.github/workflows/ci.yml`; `npm audit` clean (Next 16.4.3, zod 4.6.7).
-- Screenshots in `docs/screenshots/`.
+**Web app + API (root)**
+- Multi-tenant accounting/inventory/GST with Postgres RLS; migrations `001–006`.
+- REST API v1 for web and mobile; nonce CSP, CSRF origin checks, rate limits.
+- Invoice scanning: `POST /ocr/invoice` (photo) and `/ocr/parse` (text), shared parser, review UI on
+  the New Purchase page.
+- Tests: `npm test` (32 incl. OCR on a real image), `npm run smoke` (27 HTTP checks incl. the mobile flow).
 
-**Old code removed:** the single-tenant `app/api/*` routes, `schema.sql` and OCR invoice import
-(tesseract/pdf.js). They had no auth and no tenant isolation; the old data model is replaced by vouchers.
+**Android app (`mobile/`)**
+- Expo SDK 58 app: sign in/up, businesses, home, sell with exact GST preview, vouchers with PDF share and
+  cancel, stock, receipts/expenses, parties and ledger statements, reports, invoice scanning
+  (on-device ML Kit with server fallback).
+- Checks: `npm test`, `npx expo-doctor` (20/20), `npx expo export --platform android` bundles.
+- Not yet run on a physical phone (no Android SDK in the cloud container) — see MANUAL_TESTING.md.
+
+**Docs:** ARCHITECTURE, DATABASE, SECURITY, API, MOBILE, OCR, MANUAL_TESTING, ADRs 0001–0007.
+**CI:** `.github/workflows/ci.yml` runs server tests + audit + build, and mobile tests + doctor + bundle.
 
 ## Resume on your PC
 1. `git fetch origin && git checkout claude/zealous-hamilton-jccxrq`
-2. `npm install`
-3. `docker compose up -d` (or use your own Postgres and set `SUPERUSER_URL`)
-4. `npm run db:setup`
-5. `npm test` then `npm run dev` → http://localhost:3000
+2. `npm install` then `docker compose up -d` then `npm run db:setup`
+3. `npm test` then `npm run dev` → http://localhost:3000
+4. Mobile: `cd mobile && npm install && npx expo run:android` (see docs/MOBILE.md)
 
-To keep going with Claude Code locally, open the folder and say: *"Read docs/HANDOFF.md and continue
-with the next item in the backlog."*
+To keep going with Claude Code locally: *"Read docs/HANDOFF.md and continue with the backlog."*
 
 ## Backlog (suggested order)
-1. **Edit = cancel and re-enter helper** in the UI (copy a voucher into a new form).
-2. **Password reset and email verification** (needs an email provider such as Resend/SES).
-3. **Item batches / multiple godowns**, purchase-side cost methods (FIFO) if needed.
-4. **Exports:** Excel/CSV for reports, Tally XML export, JSON backup per organization.
-5. **Invoice PDF + WhatsApp share**; invoice templates and business logo.
-6. **GST e-invoice (IRN/QR) and e-way bill** integration.
-7. **TOTP two-factor** for owners/admins; session list with "sign out this device".
-8. **Native app:** React Native (Expo) or Kotlin/Android Studio against `/api/v1` with bearer tokens.
-   Start with: login, new sale, today's sales, stock lookup. Offline queue later (vouchers are
-   append-only, which keeps sync simple).
-9. Performance: monthly balance snapshots if reports slow down over many years.
+1. Owner decisions in docs/MANUAL_TESTING.md (package id, server URL, open sign-up, legal pages).
+2. Password reset + email verification (needs an email provider, e.g. Resend or Amazon SES).
+3. "Edit" = cancel and copy into a new voucher (web + app).
+4. Mobile: add/edit stock items, date picker, offline queue for sales.
+5. Exports: CSV/Excel for reports, JSON backup per business, Tally XML.
+6. GST e-invoice (IRN/QR) and e-way bill.
+7. TOTP two-factor for owners/admins; list of signed-in devices.
+8. Optional cloud OCR for low-confidence scans (needs owner consent + data agreement).
 
 ## Gotchas
 - `DATABASE_URL` must use `shop_app`, never the owner/superuser, or RLS is bypassed.
 - Never edit an applied migration; add `007_*.sql`.
 - Membership queries must filter `org_id = app_org_id()` (the policy also shows your own rows in other orgs).
 - `zod` 4: use `patchOf()` from `lib/validation.js` for PATCH schemas (`.partial()` keeps defaults).
-- `TRUST_PROXY=1` only behind a proxy that sets `X-Forwarded-For`.
+- `shared/` must stay pure JS (runs in Node and Hermes).
+- In `mobile/`, install packages with `npx expo install`, not plain npm.
+- After the cloud container restarts, Postgres must be started again (`service postgresql start`).
