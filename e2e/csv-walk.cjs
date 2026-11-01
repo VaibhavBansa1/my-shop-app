@@ -1,0 +1,28 @@
+const { chromium } = require('playwright');
+const fs = require('fs');
+(async () => {
+  const browser = await chromium.launch();
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
+  const page = await ctx.newPage();
+  const errors = []; page.on('pageerror', (e) => errors.push(String(e)));
+  await page.goto((process.env.BASE || 'http://localhost:3000') + '/signup');
+  await page.fill('input[autocomplete=name]', 'Csv');
+  await page.fill('input[type=email]', `csv${Date.now()}@example.com`);
+  await page.fill('input[type=password]', 'csv tester password');
+  await page.click('button:has-text("Create account")');
+  await page.waitForURL('**/orgs');
+  await page.click('text=+ Create a new business');
+  await page.fill('form input >> nth=0', '=Evil Shop');
+  await page.click('button:has-text("Create")');
+  await page.waitForURL(/\/o\/[0-9a-f-]+$/);
+  await page.goto(page.url() + '/reports');
+  await page.waitForSelector('text=Gross profit');
+  await page.click('button.chip:has-text("Trial Balance")');
+  await page.waitForSelector('tfoot');
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('text=Download CSV')]);
+  const path = await dl.path();
+  console.log('file:', dl.suggestedFilename());
+  console.log(fs.readFileSync(path, 'utf8').slice(0, 200));
+  console.log('errors:', errors.length ? errors : 'none');
+  await browser.close();
+})().catch((e) => { console.error(e.message); process.exit(1); });
