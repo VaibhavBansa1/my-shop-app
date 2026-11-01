@@ -2,6 +2,7 @@
   "name": "my-shop-app",
   "version": "0.2.0",
   "private": true,
+  "type": "module",
   "description": "Multi-tenant Tally-style accounting, inventory and GST billing for shops (Next.js + PostgreSQL).",
   "engines": {
     "node": ">=20"
@@ -11,7 +12,7 @@
     "build": "next build",
     "start": "next start",
     "db:migrate": "node scripts/migrate.mjs",
-    "test": "node --test --test-concurrency=1 test/",
+    "test": "node --test --test-concurrency=1 \"test/**/*.test.js\"",
     "lint": "next lint"
   },
   "dependencies": {
