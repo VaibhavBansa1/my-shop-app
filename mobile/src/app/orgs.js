@@ -15,7 +15,7 @@ export default function Orgs() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [resent, setResent] = useState(false);
-  const set = (k) => (v) => setF({ ...f, [k]: v });
+  const set = (k) => (v) => setF(k === 'gstin' && /^[0-9]{2}/.test(v.trim()) ? { ...f, gstin: v, stateCode: v.trim().slice(0, 2) } : { ...f, [k]: v });
   const gstinBad = f.gstin.trim() && !isValidGstin(f.gstin.trim().toUpperCase());
 
   async function open(id) { await s.selectOrg(id); router.replace('/home'); }

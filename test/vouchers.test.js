@@ -204,3 +204,29 @@ test('books start date cannot move past existing vouchers', async () => {
   const o = await updateOrg(db, { booksFrom: '2026-04-15' });
   assert.equal(o.booksFrom, '2026-04-15');
 });
+
+test('field rules: duplicate supplier bill, far-future dates, opening rate default, GSTIN/state', async () => {
+  const { createVoucher } = await import('../lib/services/vouchers.js');
+  const m = await import('../lib/services/masters.js');
+  const { updateOrg } = await import('../lib/services/orgs.js');
+  const { ledgerCreateChecked, orgCreateChecked } = await import('../lib/validation.js');
+  const { db } = await makeUserOrg();
+  const f = await fixtures(db);
+  const bill = { ...base, type: 'purchase', date: '2026-05-02', partyLedgerId: f.supplier.id, reference: 'AW/0457', items: [{ stockItemId: f.rice.id, qty: 1, rate: 400 }] };
+  const first = await createVoucher(db, bill);
+  await assert.rejects(createVoucher(db, { ...bill, reference: ' aw/0457 ' }), /already entered as PUR\/26-27\/1/);
+  // A correction of that same bill is allowed (it replaces the original).
+  await createVoucher(db, { ...bill, replacesVoucherId: first.id, items: [{ stockItemId: f.rice.id, qty: 2, rate: 400 }] });
+  // Same number from a different supplier is fine.
+  const other = await m.createLedger(db, { name: 'Other Supplier', groupId: f.g('sundry_creditors'), stateCode: '23' });
+  await createVoucher(db, { ...bill, partyLedgerId: other.id });
+  const far = new Date(); far.setDate(far.getDate() + 60);
+  await assert.rejects(createVoucher(db, { ...base, type: 'sales', date: far.toISOString().slice(0, 10), items: [{ stockItemId: f.rice.id, qty: 1, rate: 1 }] }), /future/);
+  const pcs = (await m.listUnits(db)).find((u) => u.symbol === 'pcs').id;
+  const it = await m.createItem(db, { name: 'Soap', unitId: pcs, purchasePrice: 30, openingQty: 10 });
+  assert.equal(it.openingRate, 30, 'opening stock valued at purchase price when no rate given');
+  assert.throws(() => ledgerCreateChecked.parse({ name: 'X', groupId: f.g('sundry_debtors'), gstin: '27AAACR5055K1Z7', stateCode: '23' }), /does not match/);
+  assert.throws(() => orgCreateChecked.parse({ name: 'X', gstin: '23ABCDE1234F1Z8', stateCode: '27' }), /does not match/);
+  await assert.rejects(updateOrg(db, { stateCode: '27' }), /does not match/);
+  await assert.rejects(m.updateLedger(db, f.supplier.id, { gstin: '27AAACR5055K1Z7' }), /does not match/);
+});

@@ -11,7 +11,12 @@ export default function OrgsPage() {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ name: '', gstin: '', stateCode: '23', address: '', phone: '' });
   const [error, setError] = useState(null);
-  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const set = (k) => (e) => {
+    const v = e.target.value;
+    // A GSTIN starts with the state code: fill the state from it.
+    if (k === 'gstin' && /^[0-9]{2}/.test(v.trim())) setForm({ ...form, gstin: v, stateCode: v.trim().slice(0, 2) });
+    else setForm({ ...form, [k]: v });
+  };
 
   async function create(e) {
     e.preventDefault(); setError(null);

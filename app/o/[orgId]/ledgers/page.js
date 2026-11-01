@@ -18,7 +18,11 @@ export default function Ledgers() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: '', groupId: '', openingBalance: '', side: 'debit', gstin: '', stateCode: '', phone: '', email: '', address: '' });
   const [error, setError] = useState(null);
-  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const set = (k) => (e) => {
+    const v = e.target.value;
+    if (k === 'gstin' && /^[0-9]{2}/.test(v.trim())) setForm({ ...form, gstin: v, stateCode: v.trim().slice(0, 2) });
+    else setForm({ ...form, [k]: v });
+  };
   const fullAccess = can('masters.write');
   const groupList = (groups.data?.groups ?? []).filter((g) => fullAccess || ['sundry_debtors', 'sundry_creditors'].includes(g.code))
     .sort((a, b) => a.name.localeCompare(b.name));

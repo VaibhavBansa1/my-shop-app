@@ -17,7 +17,11 @@ export default function Settings() {
   const [confirmName, setConfirmName] = useState('');
   const ai = useApi(() => api('/ai/status'), []);
   const audit = useApi(() => (can('audit.read') ? api(`/orgs/${org.id}/audit`, { query: { limit: 50 } }) : Promise.resolve(null)), [org.id]);
-  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const set = (k) => (e) => {
+    const v = e.target.value;
+    if (k === 'gstin' && /^[0-9]{2}/.test(v.trim())) setForm({ ...form, gstin: v, stateCode: v.trim().slice(0, 2) });
+    else setForm({ ...form, [k]: v });
+  };
 
   async function run(fn, ok) { setError(null); setMsg(null); try { await fn(); setMsg(ok); } catch (e) { setError(e); } }
 
