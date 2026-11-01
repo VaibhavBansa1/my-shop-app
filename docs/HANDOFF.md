@@ -12,11 +12,12 @@ This file lets anyone (you on your PC, or a new Claude session) continue the wor
 - Invoice scanning: `POST /ocr/invoice` (photo) and `/ocr/parse` (text), shared parser, review UI on
   the New Purchase page.
 - Correct a voucher (web: all types; app: sales bills) — new voucher + cancel original in one transaction.
+- CSV export for every report and the voucher list (formula-injection safe); website installable (manifest).
 - Password reset by email (Resend via env, dev logs the link); `npm run db:cleanup` for a daily cron.
-- Tests: `npm test` (36 incl. OCR on a real image), `npm run smoke` (27 HTTP checks incl. the mobile flow).
+- Tests: `npm test` (39 incl. OCR on a real image), `npm run smoke` (27 HTTP checks incl. the mobile flow).
 
 **Android app (`mobile/`)**
-- Expo SDK 58 app: sign in/up, businesses, home, sell with exact GST preview, vouchers with PDF share and
+- Expo SDK 58 app: sign in/up (+ forgot password), businesses, home, sell with exact GST preview, correct a bill, add stock items, vouchers with PDF share and
   cancel, stock, receipts/expenses, parties and ledger statements, reports, invoice scanning
   (on-device ML Kit with server fallback).
 - Checks: `npm test`, `npx expo-doctor` (20/20), `npx expo export --platform android` bundles.
@@ -36,8 +37,8 @@ To keep going with Claude Code locally: *"Read docs/HANDOFF.md and continue with
 ## Backlog (suggested order)
 1. Owner decisions in docs/MANUAL_TESTING.md (package id, server URL, open sign-up, legal pages).
 2. Email verification for new accounts (password reset is done; set RESEND_API_KEY/EMAIL_FROM in production).
-4. Mobile: add/edit stock items, date picker, offline queue for sales.
-5. Exports: CSV/Excel for reports, JSON backup per business, Tally XML.
+4. Mobile: edit stock items, date picker, offline queue for sales, CSV share.
+5. Exports: JSON backup per business, Tally XML (CSV is done).
 6. GST e-invoice (IRN/QR) and e-way bill.
 7. TOTP two-factor for owners/admins; list of signed-in devices.
 8. Optional cloud OCR for low-confidence scans (needs owner consent + data agreement).

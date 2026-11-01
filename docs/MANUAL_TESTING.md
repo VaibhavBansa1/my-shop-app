@@ -37,7 +37,10 @@ These need your judgement; the code works either way.
 12. Try opening the first business's URL while signed in as a user who is not a member → "not found".
 13. Forgot password → with no email provider configured the link appears in the server log (dev);
     in production set RESEND_API_KEY/EMAIL_FROM.
-14. Phone browser: everything usable, bottom tab bar, no sideways scrolling, dark mode readable.
+14. Reports → Download CSV → opens in Excel/Sheets with ₹ and names correct; a customer named
+    `=1+1` shows as text, not 2.
+15. On a phone browser: menu → Add to Home screen → opens full screen with the ₹ icon.
+16. Phone browser: everything usable, bottom tab bar, no sideways scrolling, dark mode readable.
 
 ## Android app
 1. Build: `cd mobile && npx expo run:android` (or EAS preview APK). Set Server to your PC's address.
@@ -45,12 +48,13 @@ These need your judgement; the code works either way.
 3. Sell → cash bill with 2 items → total matches what the website shows for the same items → Share PDF
    to WhatsApp → the PDF opens and looks right.
 4. Open that bill → **Correct this bill** → change quantity → save → the original shows cancelled.
-5. Receive money / Pay expense → appear in Vouchers and on the website.
-6. Scan purchase invoice → **Read on phone** (development build) and **Read on server** → both give a
+5. Stock → + New item → appears in the list and in Sell.
+6. Receive money / Pay expense → appear in Vouchers and on the website.
+7. Scan purchase invoice → **Read on phone** (development build) and **Read on server** → both give a
    sensible draft → save → compare with the paper bill.
-7. Turn on airplane mode → actions show a clear "could not reach the server" message, no crash.
-8. Sign out → reopen app → asks to sign in. Sign in as the cashier → no purchase/scan options.
-9. Rotate/large font sizes (Android accessibility settings) → text still fits.
+8. Turn on airplane mode → actions show a clear "could not reach the server" message, no crash.
+9. Sign out → reopen app → asks to sign in. Sign in as the cashier → no purchase/scan options.
+10. Rotate/large font sizes (Android accessibility settings) → text still fits.
 
 ## Notes / problems found
 (write here)
