@@ -25,6 +25,7 @@ export default function More() {
           {s.org.aiEnabled && s.on('ai') && <Row title="✨ Shop summary (AI)" subtitle="Plain-language summary in English, Hindi or Hinglish" right="›" onPress={go('/summary')} />}
         </Card>
         <Card>
+          <Row title="Your account" subtitle="Name, password, devices, two-step login, email" right="›" onPress={go('/account')} />
           <Row title="Switch business" right="›" onPress={async () => { await s.clearOrg(); router.replace('/orgs'); }} />
           <Row title="Help & glossary" subtitle="What every word and field means" right="›" onPress={async () => Linking.openURL(`${await getServerUrl()}/help`)} />
           <Row title="Server" right="›" onPress={go('/server')} />

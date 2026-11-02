@@ -6,6 +6,7 @@ import { useOrg } from '../../../ui/OrgContext.js';
 import { date } from '../../../ui/format.js';
 import { STATE_LIST } from '../../../ui/states.js';
 import TwoFactorCard from '../../../ui/TwoFactorCard.js';
+import AccountCard from '../../../ui/AccountCard.js';
 
 export default function Settings() {
   const { org, can, reloadOrg } = useOrg();
@@ -105,6 +106,8 @@ export default function Settings() {
         </>)}
       </div>
 
+      <AccountCard />
+
       <form className="card grid" onSubmit={(e) => { e.preventDefault(); run(async () => { await api('/auth/password', { method: 'POST', body: pw }); setPw({ currentPassword: '', newPassword: '' }); }, 'Password changed. Other devices were signed out.'); }}>
         <h2>Your password</h2>
         <div className="grid grid-2">
@@ -165,7 +168,7 @@ export default function Settings() {
 const EVENT_LABEL = {
   'login.mfa_needed': 'Password right, waiting for code', 'login.mfa_failure': 'Wrong two-step code tried', 'mfa.enabled': 'Two-step login turned on',
   'mfa.disabled': 'Two-step login turned off', 'mfa.codes_regenerated': 'New recovery codes made', 'mfa.recovery_used': 'Signed in with a recovery code',
-  'account.email_change_requested': 'Email change asked', 'account.email_changed': 'Email changed', 'account.name_changed': 'Name changed',
+  'account.email_change_requested': 'Email change asked', 'account.delete_requested': 'Account deletion asked', 'account.email_changed': 'Email changed', 'account.name_changed': 'Name changed',
   'login.success': 'Signed in', 'login.failure': 'Wrong password tried', 'login.throttled': 'Sign-in blocked (too many tries)',
   signup: 'Account created', logout: 'Signed out', 'password.changed': 'Password changed', 'password.reset_requested': 'Password reset asked',
   'password.reset_done': 'Password reset', 'email.verified': 'Email confirmed', 'session.revoked': 'A device was signed out',

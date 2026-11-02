@@ -15,6 +15,7 @@ function Nav() {
         <Stack.Screen name="login" options={{ title: 'Sign in' }} />
         <Stack.Screen name="signup" options={{ title: 'Create account' }} />
         <Stack.Screen name="server" options={{ title: 'Server' }} />
+        <Stack.Screen name="account" options={{ title: 'Your account' }} />
         <Stack.Screen name="orgs" options={{ title: 'Your businesses' }} />
         <Stack.Screen name="voucher/[id]" options={{ title: 'Voucher' }} />
         <Stack.Screen name="entry" options={{ title: 'New entry' }} />
