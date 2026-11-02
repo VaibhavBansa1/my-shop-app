@@ -1,0 +1,76 @@
+1
+00:00:00,300 --> 00:00:05,700
+Accounts, stock and GST for Indian shops — on the website and an Android app.
+
+2
+00:00:06,300 --> 00:00:11,700
+Anyone can sign up and set up their business. Each business's data is kept separate.
+
+3
+00:00:12,300 --> 00:00:17,700
+Today's sales, cash and bank, money due and low stock — at a glance.
+
+4
+00:00:18,300 --> 00:00:24,200
+Pick items and quantities. CGST + SGST or IGST is chosen automatically.
+
+5
+00:00:24,800 --> 00:00:30,200
+The same app in a phone browser, in light or dark mode.
+
+6
+00:00:30,800 --> 00:00:36,200
+Print or share an invoice with your logo, HSN codes and the tax split.
+
+7
+00:00:36,800 --> 00:00:42,700
+Take a photo of a bill. The app reads it and fills the purchase for you to check.
+
+8
+00:00:43,300 --> 00:00:49,200
+Items with photos, units, GST rates and reorder levels. Stock is always calculated, never typed.
+
+9
+00:00:49,800 --> 00:00:55,200
+Record damaged, lost or found stock with a reason, or count what is on the shelf.
+
+10
+00:00:55,800 --> 00:01:01,700
+Load items and customers from a CSV file. Every row is checked before anything is saved.
+
+11
+00:01:02,300 --> 00:01:07,700
+Gross and net profit for any period, with opening and closing stock.
+
+12
+00:01:08,300 --> 00:01:13,700
+What the business owns and owes. Day Book, Trial Balance and GST Summary too.
+
+13
+00:01:14,300 --> 00:01:19,200
+Check every report on the phone.
+
+14
+00:01:19,800 --> 00:01:25,700
+Remind customers on WhatsApp, SMS or email — English, Hindi or Hinglish, with your UPI ID.
+
+15
+00:01:26,300 --> 00:01:31,700
+Cancelled bills, low stock, new team members and a daily summary.
+
+16
+00:01:32,300 --> 00:01:38,200
+Invite staff as Admin, Accountant, Cashier or Viewer. Each sees only what their role allows.
+
+17
+00:01:38,800 --> 00:01:44,200
+See every device where you are signed in, and sign any of them out.
+
+18
+00:01:44,800 --> 00:01:50,700
+A plain-language summary of your shop. It can run on your own computer with Ollama or LM Studio.
+
+19
+00:01:51,300 --> 00:01:56,200
+Every word explained: ledger, voucher, GST, HSN, and more.
+

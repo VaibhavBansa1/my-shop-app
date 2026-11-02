@@ -6,6 +6,15 @@ work in a private space isolated at the database level.
 
 **Stack:** Next.js 16 (App Router) · PostgreSQL 14+ with Row-Level Security · `pg` · zod · Tesseract · Node 20+ · Expo SDK 58 (Android).
 
+## Feature tour (2 minutes)
+
+[![Watch the 2-minute feature tour](docs/video/poster.jpg)](docs/video/my-shop-app-tour.mp4)
+
+**[▶ Watch the tour (MP4, 2 min, with subtitles)](docs/video/my-shop-app-tour.mp4)**: billing, phone use, invoices,
+bill scanning, stock, CSV import, reports, payment reminders, team roles, security and the optional AI summary.
+It uses real screenshots of the app; the screens may look a little different as the design changes.
+Subtitles are burned in and also included as [`my-shop-app-tour.srt`](docs/video/my-shop-app-tour.srt).
+
 ![Dashboard on a phone](docs/screenshots/dashboard-phone-light.png)
 
 ## Features
