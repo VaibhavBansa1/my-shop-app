@@ -50,3 +50,24 @@ test('events leaving for Kafka carry no names or free text', async () => {
     for (const secret of ['Secret Recipe', 'SRM', 'private note', 'Sharma']) assert.ok(!all.includes(secret), secret);
   } finally { delete process.env.EVENTS_ENABLED; }
 });
+
+test('O-05: parallel reminder clicks never pass the per-customer daily limit; failed sends do not use it up', async () => {
+  const { reserveAttempt } = await import('../lib/auth/rate-limit.js');
+  const key = `reminder-test:${randomUUID()}`;
+  const rs = await Promise.allSettled(Array.from({ length: 10 }, () => reserveAttempt(key, { max: 3, windowSeconds: 86400 })));
+  // Never more than 3. (Under an exact-same-moment burst it may refuse a few extra; that is the safe direction.)
+  assert.ok(rs.filter((r) => r.status === 'fulfilled').length <= 3);
+  assert.ok(rs.filter((r) => r.status === 'rejected').every((r) => /Too many/.test(r.reason.message)));
+  const key2 = `reminder-test:${randomUUID()}`;
+  const release = await reserveAttempt(key2, { max: 1, windowSeconds: 86400 });
+  await release();                                            // e.g. the email could not be sent
+  await reserveAttempt(key2, { max: 1, windowSeconds: 86400 }); // so the allowance is still there
+});
+
+test('O-06: production uses the __Host- cookie prefix (HTTPS only, this host only)', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const out = execFileSync('node', ['-e', "import('./lib/http.js').then((h) => console.log(h.sessionCookie('t'.repeat(40), 60)))"],
+    { env: { ...process.env, NODE_ENV: 'production', APP_ORIGIN: 'https://shop.example.in' } }).toString();
+  assert.match(out, /^__Host-sid=t{40}; Path=\/; HttpOnly; SameSite=Lax; Max-Age=60; Secure/);
+  assert.doesNotMatch(out, /Domain=/i);
+});

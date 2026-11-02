@@ -110,8 +110,8 @@ All of these were problems inside one business (a cashier doing more than a cash
 | O-02 | Without `TRUST_PROXY=1`, sign-in limits are **per email only**, so an attacker can keep one account locked (F-09). | Without a trusted client IP there is nothing better to key on. | Run behind a proxy with `TRUST_PROXY=1` (and `TRUSTED_PROXY_HOPS`). Later: CAPTCHA or an emailed unlock link. |
 | O-03 | **Sign-up reveals** whether an email already has an account. | Usability trade-off (documented in SECURITY.md); rate-limited. | Revisit if needed: "check your inbox" sign-up flow. |
 | O-04 | **Signed image URLs** work for anyone who has them until they expire (they rotate daily). | Needed for CDN caching. | Do not paste image links publicly. |
-| O-05 | Reminder limits (3 per customer per day) are check-then-act, so a burst of parallel clicks can send a few extra. | Bounded, low impact; only to the customer's saved contact. | Use `reserveFailure`-style reservation if it matters. |
-| O-06 | No `__Host-` cookie prefix; CSP allows inline *styles* (not scripts). | Low impact; `__Host-` needs HTTPS in development too. | Consider `__Host-sid` in production. |
+| O-05 | **Fixed.** Reminder limits now reserve before sending (`reserveAttempt`), so parallel clicks cannot pass 3 per customer per day; a failed email does not use up the allowance. | — | `gaps.test.js` |
+| O-06 | **Fixed (cookie).** Production uses the `__Host-sid` cookie (HTTPS only, this host only, no sub-domain injection); `COOKIE_HOST_PREFIX=0` only for testing a production build over plain HTTP. Inline styles in the CSP remain (no scripts). | — | `gaps.test.js` |
 | O-07 | Expo **build tooling** shows 12 *moderate* `npm audit` advisories (`glob`, `minimatch` inside `@expo/cli` / `@expo/config`). | These run on the developer's computer while building, not inside the app on the phone. `npm audit fix --force` would downgrade to Expo 51 (wrong). | Update when Expo ships patched versions (`npx expo install --fix`). The web app has **0** advisories. |
 
 ## Load run (bounded)

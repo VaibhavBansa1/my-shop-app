@@ -61,7 +61,7 @@ r = await attacker(`/api/v1/orgs/${org}/vouchers`, { method: 'POST', body: { typ
 check(r.status === 404, 'cannot post into another org');
 r = await attacker(`/api/v1/orgs/not-a-uuid/ledgers`);
 check(r.status === 404, 'bad org id handled');
-r = await attacker('/api/v1/me', { headers: { cookie: 'sid=forged-token-value-1234567890' } });
+r = await attacker('/api/v1/me', { headers: { cookie: 'sid=forged-token-value-1234567890; __Host-sid=forged-token-value-1234567890' } });
 check(r.status === 401 || r.status === 200, 'forged cookie is not accepted as another user');
 
 // Bearer token flow for native apps

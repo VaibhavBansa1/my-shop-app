@@ -59,7 +59,7 @@ const sale = (extra = {}) => ({ type: 'sales', date: today, items: [{ stockItemI
 // --- CSRF (cookie-authenticated writes) -----------------------------------------------------
 {
   const cookie = `shop_session=${T}`;
-  const names = ['shop_session', 'session', 'sid'];
+  const names = ['__Host-sid', 'sid'];
   let used = null;
   for (const n of names) { const r = await j('GET', '/api/v1/me', null, undefined, { cookie: `${n}=${T}` }); if (r.status === 200) { used = n; break; } }
   rec('session cookie name discovered for CSRF checks', !!used, used ?? 'none');
