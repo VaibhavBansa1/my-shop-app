@@ -5,7 +5,7 @@ import { api } from '../ui/api.js';
 import { ErrorNote, Loading } from '../ui/components.js';
 import { ROLE_LABEL } from '../ui/format.js';
 
-// The token travels in the URL fragment (#...), so it is never sent to servers or logged.
+// The token travels in the URL fragment (#...) and then only in POST bodies, so it is never logged by proxies.
 export default function InvitePage() {
   const [token, setToken] = useState(null);
   const [info, setInfo] = useState(null);
@@ -15,10 +15,13 @@ export default function InvitePage() {
   useEffect(() => {
     const t = window.location.hash.slice(1);
     if (t) sessionStorage.setItem('invite', t);
+    // Remove the token from the address bar and history (screenshots, shared screens, back button).
+    if (t) window.history.replaceState(null, '', window.location.pathname);
     const tok = t || sessionStorage.getItem('invite');
     setToken(tok);
     if (!tok) { setError(new Error('This invitation link is incomplete.')); return; }
-    fetch(`/api/v1/invitations/accept?token=${encodeURIComponent(tok)}`, { credentials: 'same-origin' })
+    fetch('/api/v1/invitations/accept', { method: 'POST', credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: tok, preview: true }) })
       .then(async (r) => {
         if (r.status === 401) { setNeedLogin(true); return; }
         const d = await r.json();

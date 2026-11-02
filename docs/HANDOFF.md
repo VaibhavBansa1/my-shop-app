@@ -1,6 +1,6 @@
 # Handoff — status and next steps
 
-_Last updated: 2026-11-01. Branch: `claude/zealous-hamilton-jccxrq`._
+_Last updated: 2026-11-02. Branch: `claude/zealous-hamilton-jccxrq`._
 
 This file lets anyone (you on your PC, or a new Claude session) continue the work.
 
@@ -29,7 +29,11 @@ This file lets anyone (you on your PC, or a new Claude session) continue the wor
 - Item photos + business logo with sharp, local/S3 storage, signed CDN-cacheable URLs (docs/OPERATIONS.md);
   optional Kafka event stream via a transactional outbox (ADR-0009).
 - Password reset by email (Resend via env, dev logs the link); `npm run db:cleanup` for a daily cron.
-- Tests: `npm test` (79, incl. images, Kafka outbox (real broker test with TEST_KAFKA_BROKERS), ops/flags/queue, encryption, import, stock adjustments, notifications and reminders, role x endpoint matrix, OCR on a real image, AI with a fake model server, real SMTP delivery), `npm run smoke` (27 HTTP checks incl. the mobile flow).
+- Tests: `npm test` (96, incl. images, Kafka outbox (real broker test with TEST_KAFKA_BROKERS), ops/flags/queue, encryption, import, stock adjustments, notifications and reminders, role x endpoint matrix, OCR on a real image, AI with a fake model server, real SMTP delivery), `npm run smoke` (27 HTTP checks incl. the mobile flow).
+
+- Security testing rounds 1 and 2: 24 findings fixed with tests, none crossed businesses; open items and
+  accepted risks in docs/SECURITY_FINDINGS.md (migrations 020–022). Re-run: `node scripts/security/probe.mjs`,
+  `probe2.mjs`, `burst.mjs` against a local server.
 
 **Android app (`mobile/`)**
 - Expo SDK 58 app: sign in/up (+ forgot password), businesses, home, sell with exact GST preview, correct a bill, add stock items, vouchers with PDF share and

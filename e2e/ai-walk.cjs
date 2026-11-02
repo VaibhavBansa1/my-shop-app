@@ -50,7 +50,7 @@ async function pick(loc, text) { const v = await loc.evaluate((el, t) => [...el.
   await page.waitForSelector('text=INV/');
   await page.goto(`${base}/settings`);
   await page.waitForSelector('text=Turn on AI shop summaries');
-  await page.click('input[type=checkbox]');
+  await page.locator('label:has-text("Turn on AI shop summaries") input[type=checkbox]').click();
   await page.waitForSelector('text=AI summaries turned on');
   await page.screenshot({ path: `${OUT}/ai-settings-desktop.png`, fullPage: true });
   await page.goto(base);

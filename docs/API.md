@@ -32,7 +32,7 @@ Dates are `YYYY-MM-DD`.
 | POST | `/auth/verify-email/confirm` | — | `{token}` confirms the email |
 | GET | `/ai/status` | signed in | `{available, provider, model, local, sharesNames}` (no secrets) |
 | GET | `/me` | signed in | user (with `emailVerified`), `verification` policy, `ai` status, organizations with your role |
-| GET/POST | `/invitations/accept` | signed in | GET `?token=` preview; POST `{token}` join |
+| POST | `/invitations/accept` | signed in | `{token, preview: true}` shows the invitation; `{token}` joins (needs a confirmed email unless verification is off). The token is never put in a URL. |
 | GET/POST | `/orgs` | signed in | list / create (you become owner; chart of accounts is seeded) |
 | GET | `/orgs/{org}` | viewer | includes `permissions` for your role |
 | PATCH | `/orgs/{org}` | admin | business details, `aiEnabled`, `upiId` |

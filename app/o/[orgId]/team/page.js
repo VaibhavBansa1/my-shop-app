@@ -17,13 +17,14 @@ export default function Team() {
   const [form, setForm] = useState({ email: '', role: 'cashier' });
   const [link, setLink] = useState(null);
   const [emailed, setEmailed] = useState(false);
+  const [emailChecked, setEmailChecked] = useState(true);
   const [error, setError] = useState(null);
   const manageable = org.role === 'owner' ? ['owner', 'admin', 'accountant', 'cashier', 'viewer'] : ['accountant', 'cashier', 'viewer'];
 
   async function act(fn) { setError(null); try { await fn(); list.reload(); } catch (e) { setError(e); } }
   async function invite(e) {
     e.preventDefault();
-    await act(async () => { const r = await api(`/orgs/${org.id}/invitations`, { method: 'POST', body: form }); setLink(r.link); setEmailed(r.emailed); setForm({ ...form, email: '' }); });
+    await act(async () => { const r = await api(`/orgs/${org.id}/invitations`, { method: 'POST', body: form }); setLink(r.link); setEmailed(r.emailed); setEmailChecked(r.emailChecked !== false); setForm({ ...form, email: '' }); });
   }
 
   if (!can('members.read')) return <ErrorNote error={new Error('Only admins and owners can manage the team.')} />;
@@ -42,6 +43,7 @@ export default function Team() {
         {link && (
           <div className="note note-ok">
             {emailed ? 'Invitation emailed. You can also share this link (WhatsApp, SMS).' : 'Share this link with them (WhatsApp, SMS or email).'} It works once, for that email only, for 7 days. It will not be shown again.
+            {!emailChecked && <p style={{ marginTop: 6 }}><b>Note:</b> this server does not confirm email addresses, so whoever has this link could sign up with that email. Send it only to that person, not to a group.</p>}
             <div className="row" style={{ marginTop: 8 }}><input readOnly value={link} onFocus={(e) => e.target.select()} />
               <button type="button" className="btn btn-sm" onClick={() => navigator.clipboard?.writeText(link)}>Copy</button></div>
           </div>

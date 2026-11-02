@@ -45,6 +45,8 @@
 | Queued secrets | Job payloads encrypted in Postgres and wiped after success | `lib/queue.js` |
 | Stolen database / backup | Contact details (phone, email, address) encrypted with AES-256-GCM (`DATA_ENCRYPTION_KEY`); passwords and tokens hashed; see DATA_PROTECTION.md | `lib/crypto.js` |
 | Import abuse | 5000 rows / 4 MB max, every row validated like a form, one transaction, audited | `lib/services/importData.js` |
+| Cashier abuse of bills | Receipts are "money in" only, bills post to Sales/Purchase ledgers, cashiers cannot change GST rates or set opening balances (F-14..F-16) | `lib/services/vouchers.js`, `lib/services/masters.js` |
+| Password guessing bursts | Each guess is reserved before checking; limit per email+IP when the IP is known; change-password limited | `lib/auth/rate-limit.js` (`reserveFailure`) |
 | Leaking details to unauthorised users | Voucher creation checks permission before validating the body | `app/api/v1/orgs/[orgId]/vouchers/route.js` |
 | Notification privacy | Rows belong to one recipient; RLS limits read/update to `user_id = app.user_id` in the current business; app cannot delete or edit text; links must be in-app paths (CHECK constraint) | `010_notifications.sql` |
 | Customer spam via reminders | 3 per customer per day, 200 per business per day; only to the customer's saved contact; audited | `lib/services/reminders.js` |
@@ -58,12 +60,16 @@ cannot delete vouchers/audit), `test/vouchers.test.js` (balance trigger, immutab
 through the real HTTP handlers; outsiders get 404, anonymous 401), `mobile/test/pure.test.mjs` (URL policy, HTML escaping), and
 `scripts/smoke.mjs` over HTTP (CSRF, cross-org 404s, forged sessions, bearer flow, mobile flow, OCR).
 
+Security testing rounds (probes, load run, dependency check) and every finding with its fix and test:
+**[SECURITY_FINDINGS.md](SECURITY_FINDINGS.md)**. Probes: `scripts/security/probe.mjs`, `probe2.mjs`, `burst.mjs`.
+
 ## Known gaps / next steps
 - Password reset is built (one-time 30-minute links, hashed tokens, same answer for unknown emails, signs out
   everywhere). It needs an email provider in production: set `RESEND_API_KEY` and `EMAIL_FROM`.
 - Email verification is built (see docs/EMAIL.md).
 - Two-factor authentication (TOTP) for owners/admins.
 - Sign-up reveals whether an email already has an account (accepted trade-off for usability).
-- Per-IP throttling needs `TRUST_PROXY=1` behind a proxy that sets `X-Forwarded-For`.
+- Per-IP throttling needs `TRUST_PROXY=1` behind a proxy that sets `X-Forwarded-For`; the client IP is read
+  `TRUSTED_PROXY_HOPS` entries from the right (default 1). Without it, sign-in limits are per email (see O-02).
 - Backups/PITR are the hosting provider's job; test restores regularly.
 - Run `npm audit` and keep Next.js patched (CI does this).

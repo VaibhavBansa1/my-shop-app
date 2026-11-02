@@ -272,11 +272,11 @@ test('idempotency: same key returns the first bill; parallel duplicates create o
   const f = await fixtures(db);
   const body = { ...base, type: 'sales', date: '2026-05-10', items: [{ stockItemId: f.rice.id, qty: 1, rate: 100 }] };
   const req = (key) => new Request('http://x/', { headers: { 'idempotency-key': key } });
-  const runs = await Promise.allSettled([1, 2, 3].map(() => idempotent(req('double-tap-1'), db, body, () => createVoucher(db, body))));
+  const runs = await Promise.allSettled([1, 2, 3].map(() => idempotent(req('double-tap-1'), db, body, (bc) => createVoucher(db, body, { beforeCommit: bc }))));
   const ok = runs.filter((r) => r.status === 'fulfilled');
   assert.ok(ok.length >= 1);
   assert.ok(runs.filter((r) => r.status === 'rejected').every((r) => r.reason.status === 409), 'in-flight duplicates get 409');
-  const again = await idempotent(req('double-tap-1'), db, body, () => createVoucher(db, body));
+  const again = await idempotent(req('double-tap-1'), db, body, (bc) => createVoucher(db, body, { beforeCommit: bc }));
   assert.equal(again.replayed, true);
   assert.equal(again.data.id, ok[0].value.data.id, 'replay returns the same bill');
   const R = await import('../lib/services/reports.js');

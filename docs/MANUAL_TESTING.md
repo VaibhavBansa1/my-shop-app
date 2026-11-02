@@ -84,5 +84,17 @@ These need your judgement; the code works either way.
 9. Sign out → reopen app → asks to sign in. Sign in as the cashier → no purchase/scan options.
 10. Rotate/large font sizes (Android accessibility settings) → text still fits.
 
+## Security checks (round 2 fixes, on a real browser/phone)
+- [ ] Open `/login?next=/%09/example.com`, sign in: you must land on your businesses, **not** example.com.
+- [ ] With email set up: invite a new address, sign up with it **without** clicking the confirmation link,
+      open the invitation: it must ask you to confirm your email first.
+- [ ] Without email set up: creating an invitation shows the "send it only to that person" note.
+- [ ] As a cashier: a receipt with an extra expense line, a sales bill with a changed GST %, and a new customer
+      with an opening balance are all refused with a clear message.
+- [ ] After bills exist, Settings refuses to change the financial-year start month.
+- [ ] Behind your real proxy: set `TRUST_PROXY=1` (and `TRUSTED_PROXY_HOPS` if there are two proxies). Check
+      "Where am I signed in?" shows your real IP, not the proxy's.
+- [ ] An item photo older than a day is still shown after `npm run db:cleanup` (F-22).
+
 ## Notes / problems found
 (write here)

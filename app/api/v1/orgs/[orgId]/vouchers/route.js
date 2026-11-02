@@ -25,6 +25,8 @@ export const POST = route(async ({ request, db, role }) => {
   if (!can(role, `voucher.create.${type}`)) throw forbidden(`Your role cannot create ${type.replace('_', ' ')} vouchers.`);
   if (raw?.replacesVoucherId && !can(role, 'voucher.cancel')) throw forbidden('Your role cannot correct (cancel) vouchers.');
   const body = voucherSchema.parse(raw);
-  const r = await idempotent(request, db, body, () => createVoucher(db, body));
+  // Not part of the request schema (cannot be sent by a client): marks people who may not post journals.
+  const limited = !can(role, 'voucher.create.journal');
+  const r = await idempotent(request, db, body, (beforeCommit) => createVoucher(db, { ...body, __limited: limited }, { beforeCommit }));
   return json(r.data, r.status, r.replayed ? { 'idempotent-replayed': 'true' } : {});
 }, { action: 'vouchers.read' });

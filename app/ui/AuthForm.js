@@ -3,13 +3,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { api } from './api.js';
 import { Field, ErrorNote } from './components.js';
+import { safeNextPath, DEFAULT_NEXT } from '../../shared/safeNext.js';
 
 function safeNext() {
   // Default: the business list, which opens your business directly when you have only one.
-  if (typeof window === 'undefined') return '/orgs?auto=1';
-  const n = new URLSearchParams(window.location.search).get('next');
-  // Only allow same-site relative paths (prevents open redirects).
-  return n && n.startsWith('/') && !n.startsWith('//') && !n.startsWith('/\\') ? n : '/orgs?auto=1';
+  if (typeof window === 'undefined') return DEFAULT_NEXT;
+  return safeNextPath(new URLSearchParams(window.location.search).get('next'), window.location.origin);
 }
 
 export default function AuthForm({ mode }) {
