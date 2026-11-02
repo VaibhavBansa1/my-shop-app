@@ -14,11 +14,13 @@ export const POST = route(async ({ request }) => {
   catch (e) {
     // Attach the attempt to the account it targeted (if any), so its owner sees it in Settings → Security.
     const target = (await getPool().query('select id from users where email = $1', [body.email]).catch(() => ({ rows: [] }))).rows[0]?.id ?? null;
-    await securityEvent(e.status === 429 ? 'login.throttled' : 'login.failure', { ...meta, userId: target, detail: `email=${body.email}` });
+    const kind = e.status === 429 ? 'login.throttled' : e.code === 'mfa_required' ? 'login.mfa_needed' : e.code === 'mfa_invalid' ? 'login.mfa_failure' : 'login.failure';
+    await securityEvent(kind, { ...meta, userId: target, detail: `email=${body.email}` });
     throw e;
   }
-  const { user, session } = result;
-  await securityEvent('login.success', { ...meta, userId: user.id, detail: body.returnToken ? 'app' : 'web' });
+  const { user, session, secondFactor } = result;
+  await securityEvent('login.success', { ...meta, userId: user.id, detail: `${body.returnToken ? 'app' : 'web'}${secondFactor ? ` +${secondFactor}` : ''}` });
+  if (secondFactor === 'recovery') await securityEvent('mfa.recovery_used', { ...meta, userId: user.id });
   if (body.returnToken) return json({ user, token: session.token, expiresIn: session.maxAgeSeconds });
   return json({ user }, 200, { 'set-cookie': sessionCookie(session.token, session.maxAgeSeconds) });
 }, { auth: false });

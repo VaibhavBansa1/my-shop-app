@@ -12,7 +12,8 @@ function safeNext() {
 }
 
 export default function AuthForm({ mode }) {
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', code: '' });
+  const [needCode, setNeedCode] = useState(false);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -22,9 +23,12 @@ export default function AuthForm({ mode }) {
     setBusy(true); setError(null);
     try {
       if (mode === 'signup') await api('/auth/signup', { method: 'POST', body: form });
-      else await api('/auth/login', { method: 'POST', body: { email: form.email, password: form.password } });
+      else await api('/auth/login', { method: 'POST', body: { email: form.email, password: form.password, ...(needCode ? { code: form.code } : {}) } });
       window.location.href = safeNext();
-    } catch (err) { setError(err); setBusy(false); }
+    } catch (err) {
+      if (err.code === 'mfa_required') { setNeedCode(true); setError(null); } else setError(err);
+      setBusy(false);
+    }
   }
 
   return (
@@ -45,6 +49,11 @@ export default function AuthForm({ mode }) {
             <input type="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} required
               minLength={mode === 'signup' ? 10 : 1} maxLength={200} value={form.password} onChange={set('password')} />
           </Field>
+          {needCode && (
+            <Field label="Code from your authenticator app" hint="6 digits. Lost your phone? Type one of your recovery codes instead.">
+              <input autoComplete="one-time-code" inputMode="text" required autoFocus maxLength={20} value={form.code} onChange={set('code')} />
+            </Field>
+          )}
           {mode !== 'signup' && <p style={{ margin: '-4px 0 0', textAlign: 'right' }}><Link href="/forgot" style={{ fontSize: 13 }}>Forgot password?</Link></p>}
           <button className="btn btn-primary btn-block" disabled={busy}>{busy ? 'Please wait…' : mode === 'signup' ? 'Create account' : 'Sign in'}</button>
           <p className="muted" style={{ textAlign: 'center' }}>

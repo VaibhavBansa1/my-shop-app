@@ -45,6 +45,7 @@
 | Queued secrets | Job payloads encrypted in Postgres and wiped after success | `lib/queue.js` |
 | Stolen database / backup | Contact details (phone, email, address) encrypted with AES-256-GCM (`DATA_ENCRYPTION_KEY`); passwords and tokens hashed; see DATA_PROTECTION.md | `lib/crypto.js` |
 | Import abuse | 5000 rows / 4 MB max, every row validated like a form, one transaction, audited | `lib/services/importData.js` |
+| Stolen password | Optional two-step login (authenticator-app codes, RFC 6238, secret encrypted, each code usable once, 5 wrong codes per 15 min) and 10 one-time recovery codes (hashed). `REQUIRE_2FA_FOR_OWNERS=1` makes it mandatory for owners/admins before any change | `lib/auth/totp.js`, `lib/services/twoFactor.js` |
 | Cashier abuse of bills | Receipts are "money in" only, bills post to Sales/Purchase ledgers, cashiers cannot change GST rates or set opening balances (F-14..F-16) | `lib/services/vouchers.js`, `lib/services/masters.js` |
 | Password guessing bursts | Each guess is reserved before checking; limit per email+IP when the IP is known; change-password limited | `lib/auth/rate-limit.js` (`reserveFailure`) |
 | Leaking details to unauthorised users | Voucher creation checks permission before validating the body | `app/api/v1/orgs/[orgId]/vouchers/route.js` |
@@ -67,7 +68,8 @@ Security testing rounds (probes, load run, dependency check) and every finding w
 - Password reset is built (one-time 30-minute links, hashed tokens, same answer for unknown emails, signs out
   everywhere). It needs an email provider in production: set `RESEND_API_KEY` and `EMAIL_FROM`.
 - Email verification is built (see docs/EMAIL.md).
-- Two-factor authentication (TOTP) for owners/admins.
+- Two-factor login is built (Settings → Two-step login). Lost phone **and** recovery codes: there is no self-service
+  way back by design; the server operator can clear `totp_secret`/`totp_enabled_at` for that user after checking identity.
 - Sign-up reveals whether an email already has an account (accepted trade-off for usability).
 - Per-IP throttling needs `TRUST_PROXY=1` behind a proxy that sets `X-Forwarded-For`; the client IP is read
   `TRUSTED_PROXY_HOPS` entries from the right (default 1). Without it, sign-in limits are per email (see O-02).

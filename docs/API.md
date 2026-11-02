@@ -7,6 +7,8 @@ Base path `/api/v1`. JSON in and out. The web app and future native apps use the
   from the app's own origin (`Origin` header checked).
 - **Native:** `POST /auth/login` with `"returnToken": true` returns `{ token }`; send
   `Authorization: Bearer <token>` on every request. No Origin needed.
+- **Two-step login:** if the account has it on, `POST /auth/login` answers `401 {error:{code:"mfa_required"}}` after a correct
+  password; send the same request again with `"code": "123456"` (or a recovery code like `"abcde-fghij"`). Wrong codes → `mfa_invalid`.
 
 ## Errors
 ```json
@@ -32,6 +34,7 @@ Dates are `YYYY-MM-DD`.
 | POST | `/auth/verify-email/confirm` | — | `{token}` confirms the email |
 | GET | `/ai/status` | signed in | `{available, provider, model, local, sharesNames}` (no secrets) |
 | GET | `/me` | signed in | user (with `emailVerified`), `verification` policy, `ai` status, organizations with your role |
+| GET/POST | `/me/two-factor` | signed in | Two-step login: status; `{action:'setup',password}` → `{secret, uri}`; `{action:'enable',code}` → `{recoveryCodes}`; `{action:'recovery-codes',password,code}`; `{action:'disable',password,code}` |
 | POST | `/invitations/accept` | signed in | `{token, preview: true}` shows the invitation; `{token}` joins (needs a confirmed email unless verification is off). The token is never put in a URL. |
 | GET/POST | `/orgs` | signed in | list / create (you become owner; chart of accounts is seeded) |
 | GET | `/orgs/{org}` | viewer | includes `permissions` for your role |

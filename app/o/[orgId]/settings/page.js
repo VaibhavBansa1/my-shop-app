@@ -5,6 +5,7 @@ import { useApi, ErrorNote, PageHead, Field } from '../../../ui/components.js';
 import { useOrg } from '../../../ui/OrgContext.js';
 import { date } from '../../../ui/format.js';
 import { STATE_LIST } from '../../../ui/states.js';
+import TwoFactorCard from '../../../ui/TwoFactorCard.js';
 
 export default function Settings() {
   const { org, can, reloadOrg } = useOrg();
@@ -114,6 +115,8 @@ export default function Settings() {
           <span className="spacer" /><button type="button" className="btn btn-danger" onClick={async () => { await api('/auth/logout', { method: 'POST' }); window.location.href = '/'; }}>Sign out</button></div>
       </form>
 
+      <TwoFactorCard />
+
       <div className="card grid" id="security">
         <h2>Security — your devices and sign-ins</h2>
         <p className="muted">Places where you are signed in. If you don't recognise one, sign it out and change your password.</p>
@@ -160,6 +163,9 @@ export default function Settings() {
 }
 
 const EVENT_LABEL = {
+  'login.mfa_needed': 'Password right, waiting for code', 'login.mfa_failure': 'Wrong two-step code tried', 'mfa.enabled': 'Two-step login turned on',
+  'mfa.disabled': 'Two-step login turned off', 'mfa.codes_regenerated': 'New recovery codes made', 'mfa.recovery_used': 'Signed in with a recovery code',
+  'account.email_change_requested': 'Email change asked', 'account.email_changed': 'Email changed', 'account.name_changed': 'Name changed',
   'login.success': 'Signed in', 'login.failure': 'Wrong password tried', 'login.throttled': 'Sign-in blocked (too many tries)',
   signup: 'Account created', logout: 'Signed out', 'password.changed': 'Password changed', 'password.reset_requested': 'Password reset asked',
   'password.reset_done': 'Password reset', 'email.verified': 'Email confirmed', 'session.revoked': 'A device was signed out',

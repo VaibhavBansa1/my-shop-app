@@ -65,8 +65,8 @@ export const api = {
   upload: (path, blob, contentType = 'image/jpeg') => request(path, { method: 'POST', raw: blob, contentType, timeout: 90_000 }),
 };
 
-export async function login(email, password) {
-  const r = await request('/auth/login', { method: 'POST', body: { email, password, returnToken: true } });
+export async function login(email, password, code) {
+  const r = await request('/auth/login', { method: 'POST', body: { email, password, returnToken: true, ...(code ? { code } : {}) } });
   await saveToken(r.token);
   return r.user;
 }
