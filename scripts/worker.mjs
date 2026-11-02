@@ -9,6 +9,7 @@ import { bullConnection, closeRedis } from '../lib/redis.js';
 import { getPool } from '../lib/db.js';
 import { metrics } from '../lib/metrics.js';
 import { log } from '../lib/log.js';
+import { kafkaConfigured, publishOutboxOnce, closeKafka } from '../lib/kafka.js';
 
 const require = createRequire(import.meta.url);
 const workerId = `${process.env.HOSTNAME || 'worker'}-${process.pid}`;
@@ -48,6 +49,17 @@ if (process.env.REDIS_URL) {
   })();
 }
 
+// Kafka outbox relay: publishes business events every second when KAFKA_BROKERS is set.
+if (kafkaConfigured()) {
+  log.info('kafka outbox relay on', { brokers: process.env.KAFKA_BROKERS });
+  (async function relay() {
+    while (!stopping) {
+      const n = await publishOutboxOnce().catch((e) => { log.warn('outbox relay error', { error: e.message }); return -1; });
+      if (n <= 0) await new Promise((r) => setTimeout(r, n < 0 ? 5000 : 1000));
+    }
+  })();
+}
+
 const server = http.createServer(async (req, res) => {
   if (req.url === '/healthz') {
     const ok = Date.now() - lastTick < 120_000;
@@ -64,7 +76,7 @@ async function shutdown(sig) {
   log.info('worker stopping', { signal: sig });
   server.close();
   await bullWorker?.close();
-  await closeQueue(); await closeRedis(); await getPool().end().catch(() => {});
+  await closeQueue(); await closeRedis(); await closeKafka(); await getPool().end().catch(() => {});
   process.exit(0);
 }
 process.on('SIGTERM', () => shutdown('SIGTERM'));

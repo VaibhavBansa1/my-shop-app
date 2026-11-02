@@ -9,7 +9,7 @@ export function proxy(request) {
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    `img-src 'self' data: blob:${process.env.IMAGE_BASE_URL ? ` ${new URL(process.env.IMAGE_BASE_URL).origin}` : ''}`,
     "font-src 'self'",
     `connect-src 'self'${dev ? ' ws:' : ''}`,
     "object-src 'none'",
