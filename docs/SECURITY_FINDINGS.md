@@ -94,6 +94,14 @@ All of these were problems inside one business (a cashier doing more than a cash
 | F-24 | Low | If the server crashed between saving a bill and storing its idempotent response, the key **stayed "processing" for 24 hours**. | The response is stored in the same transaction as the bill (`beforeCommit`). | `vouchers.test.js` (idempotency) |
 | — | Low | The daily summary ignored per-business allow/deny lists of the `daily_summary` flag. | Checked per business. | `notifications.test.js` |
 
+## Round 3: gaps found while answering "does it leak anything?"
+
+| ID | Severity | Problem | Fix | Test |
+|---|---|---|---|---|
+| F-25 | Medium | There was **no overall request limit** per signed-in user, so one account could flood heavy endpoints such as reports. | `API_RATE_PER_MIN` (default 600) per user. It is shared through Redis; without Redis each server process counts on its own. Over the limit the answer is 429 with `Retry-After: 60`. A limit at the proxy (nginx `limit_req`, Cloudflare) is still recommended. | `gaps.test.js` |
+| F-26 | Low | **Unexpected database errors were logged with their message**, which can quote stored values (e.g. a duplicate customer name). | `errText()`/`errStack()` log only the Postgres code, constraint and table. Used by the HTTP layer, job queue, outbox relay, worker and daily summary. | `gaps.test.js` |
+| F-27 | Low | **Kafka events included item names, SKU, HSN and the cancel reason** (free text), although the docs said "ids and amounts only". | Those fields are removed; events now really carry only ids, codes and amounts. | `gaps.test.js` |
+
 ## Open items and accepted risks
 
 | ID | What | Why it stays | What to do |
