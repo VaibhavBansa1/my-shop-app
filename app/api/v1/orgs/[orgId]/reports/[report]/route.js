@@ -3,6 +3,7 @@ import { route } from '../../../../../../../lib/http.js';
 import { dateRange, uuid } from '../../../../../../../lib/validation.js';
 import * as R from '../../../../../../../lib/services/reports.js';
 import { notFound } from '../../../../../../../lib/errors.js';
+import { cachedReport } from '../../../../../../../lib/cache.js';
 
 const q = dateRange.extend({ ledger: uuid.optional(), kind: z.enum(['receivable', 'payable']).optional() });
 
@@ -22,5 +23,6 @@ export const GET = route(async ({ request, db, params }) => {
   const fn = Object.hasOwn(REPORTS, params.report) ? REPORTS[params.report] : null;
   if (!fn) throw notFound('Unknown report.');
   const p = q.parse(Object.fromEntries(new URL(request.url).searchParams));
-  return fn(db, Object.fromEntries(Object.entries(p).filter(([, v]) => v !== undefined)));
+  const args = Object.fromEntries(Object.entries(p).filter(([, v]) => v !== undefined));
+  return cachedReport(db, params.report, args, () => fn(db, args));
 }, { action: 'reports.read' });

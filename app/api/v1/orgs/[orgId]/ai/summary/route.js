@@ -6,4 +6,4 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 export const POST = route(async ({ request, db, user }) =>
-  summarize(db, aiSummarySchema.parse(await readJson(request)), { userId: user.id }), { action: 'reports.read' });
+  summarize(db, aiSummarySchema.parse(await readJson(request)), { userId: user.id }), { action: 'reports.read', flag: 'ai' });

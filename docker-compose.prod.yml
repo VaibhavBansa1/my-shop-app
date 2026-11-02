@@ -1,0 +1,59 @@
+# Full production-like stack on one machine:  docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+# Services: postgres, redis, migrate (runs once), web (2 replicas), worker. Put a TLS reverse proxy
+# (Caddy/Nginx/Traefik or a cloud load balancer) in front of port 3000.
+x-app: &app
+  build: .
+  image: myshop:latest
+  restart: unless-stopped
+  env_file: .env.production
+  environment:
+    DATABASE_URL: postgres://shop_app:${APP_DB_PASSWORD}@db:5432/shop
+    DATABASE_OWNER_URL: postgres://shop_owner:${OWNER_DB_PASSWORD}@db:5432/shop
+    REDIS_URL: redis://redis:6379/0
+    EMAIL_VIA_QUEUE: "1"
+    TRUST_PROXY: "1"
+  depends_on:
+    db: { condition: service_healthy }
+    redis: { condition: service_healthy }
+  read_only: true
+  tmpfs: [/tmp]
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      OWNER_DB_PASSWORD: ${OWNER_DB_PASSWORD}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/postgres-init.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U postgres"], interval: 5s, retries: 20 }
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
+    volumes: [redisdata:/data]
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, retries: 20 }
+  migrate:
+    <<: *app
+    restart: "no"
+    command: ["node", "scripts/migrate.mjs"]
+  web:
+    <<: *app
+    command: ["node", "server.js"]
+    ports: ["3000:3000"]
+    deploy: { replicas: 1 }
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+  worker:
+    <<: *app
+    command: ["node", "scripts/worker.mjs"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+volumes:
+  pgdata:
+  redisdata:

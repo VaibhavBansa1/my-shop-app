@@ -11,4 +11,4 @@ export const POST = route(async ({ request, db, user }) => {
   await assertUnderLimit(`ocr-text:${user.id}`, { max: 300, windowSeconds: 3600, failuresOnly: false });
   await recordAttempt(`ocr-text:${user.id}`, true);
   return draftFromText(db, text, { engine: 'device' });
-}, { action: 'voucher.create.purchase' });
+}, { action: 'voucher.create.purchase', flag: 'ocr' });

@@ -18,4 +18,4 @@ export const POST = route(async ({ request, db, params }) => {
   catch (e) { if (e.status) throw e; throw badRequest('Request body is not valid JSON.'); }
   const p = body.parse(data);
   return importRows(db, params.kind, p.rows, { dryRun: p.dryRun, skipExisting: p.skipExisting });
-}, { action: 'masters.write' });
+}, { action: 'masters.write', flag: 'import' });

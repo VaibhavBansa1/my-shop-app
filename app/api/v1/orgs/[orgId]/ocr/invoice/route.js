@@ -15,4 +15,4 @@ export const POST = route(async ({ request, db, user }) => {
   await recordAttempt(`ocr-image:${user.id}`, true);
   const { text, confidence } = await recognize(buf);
   return json(await draftFromText(db, text, { engine: 'server-tesseract', confidence }));
-}, { action: 'voucher.create.purchase' });
+}, { action: 'voucher.create.purchase', flag: 'ocr' });

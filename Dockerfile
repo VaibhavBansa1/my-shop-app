@@ -1,0 +1,42 @@
+# syntax=docker/dockerfile:1.7
+# Production image for My Shop App (web + worker + migrations use the same image).
+#   docker build -t myshop .
+#   docker run --env-file .env.production -p 3000:3000 myshop            # web
+#   docker run --env-file .env.production myshop node scripts/worker.mjs  # worker
+#   docker run --env-file .env.production myshop node scripts/migrate.mjs # migrations
+
+FROM node:22-bookworm-slim AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+
+FROM node:22-bookworm-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+FROM node:22-bookworm-slim AS runtime
+WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
+# Non-root user; the app never writes to its own files.
+RUN groupadd --system --gid 10001 app && useradd --system --uid 10001 --gid app --home /app app
+# Next.js standalone server + static assets
+COPY --from=build --chown=app:app /app/.next/standalone ./
+COPY --from=build --chown=app:app /app/.next/static ./.next/static
+COPY --from=build --chown=app:app /app/public ./public
+# Worker, migrations and scripts need the full production node_modules and source
+COPY --from=deps --chown=app:app /app/node_modules ./node_modules
+COPY --chown=app:app lib ./lib
+COPY --chown=app:app shared ./shared
+COPY --chown=app:app scripts ./scripts
+COPY --chown=app:app db ./db
+COPY --chown=app:app docs/GLOSSARY.md docs/FIELDS.md ./docs/
+COPY --chown=app:app package.json ./
+USER 10001:10001
+EXPOSE 3000 9091
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "server.js"]

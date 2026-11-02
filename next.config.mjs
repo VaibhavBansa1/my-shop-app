@@ -12,8 +12,11 @@ const securityHeaders = [
 
 export default {
   poweredByHeader: false,
+  // Self-contained server bundle for the Docker image (only the files the server needs).
+  output: 'standalone',
+  outputFileTracingIncludes: { '/*': ['./node_modules/@tesseract.js-data/eng/4.0.0_best_int/**/*', './docs/GLOSSARY.md', './docs/FIELDS.md'] },
   // Tesseract spawns worker threads and loads files at runtime; keep it out of the bundle.
-  serverExternalPackages: ['tesseract.js', '@tesseract.js-data/eng'],
+  serverExternalPackages: ['tesseract.js', '@tesseract.js-data/eng', 'bullmq', 'ioredis', 'prom-client', 'nodemailer'],
   reactStrictMode: true,
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];

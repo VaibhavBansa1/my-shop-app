@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.github
+mobile
+e2e
+test
+docs/screenshots
+*.log
+.env*
+!.env.example
+coverage
