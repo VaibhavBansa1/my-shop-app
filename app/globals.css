@@ -107,7 +107,7 @@ tfoot td { font-weight: 700; color: var(--ink); border-bottom: 0; }
 
 /* app shell */
 .shell { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
-.side { background: var(--surface); border-right: 1px solid var(--line); padding: 14px 10px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.side { align-self: start; background: var(--surface); border-right: 1px solid var(--line); padding: 14px 10px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
 .side .brand { padding: 4px 8px 14px; }
 .org-switch { display: block; padding: 8px 10px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14px; }
 .org-switch small { display: block; font-weight: 400; color: var(--muted); }

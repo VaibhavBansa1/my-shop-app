@@ -26,6 +26,7 @@ export default function OrgLayout({ children, params }) {
   const { orgId } = use(params);
   const path = usePathname();
   const org = useApi(() => api(`/orgs/${orgId}`), [orgId]);
+  const flags = useApi(() => api(`/orgs/${orgId}/flags`), [orgId]);
   // Unread notification count, refreshed every minute and after "mark all read".
   const [unread, setUnread] = useState(0);
   useEffect(() => {
@@ -41,12 +42,13 @@ export default function OrgLayout({ children, params }) {
   const base = `/o/${orgId}`;
   const o = org.data;
   const can = (a) => o.permissions.includes(a);
+  const on = (f) => flags.data?.[f] !== false; // features stay visible until the server says they are off
   const isActive = (n) => {
     const target = base + (n.match ?? n.href.split('?')[0]);
     return n.href === '' ? path === base : path === target || (path.startsWith(`${target}/`) && !(n.href === '/vouchers' && path.startsWith(`${base}/vouchers/new`)));
   };
   return (
-    <OrgContext.Provider value={{ org: o, base, can, reloadOrg: org.reload }}>
+    <OrgContext.Provider value={{ org: o, base, can, on, reloadOrg: org.reload }}>
       <div className="shell">
         <aside className="side">
           <Link className="brand" href="/orgs"><span className="brand-mark">₹</span>My Shop App</Link>

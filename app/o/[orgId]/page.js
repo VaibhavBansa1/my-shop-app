@@ -7,7 +7,7 @@ import { money, qty } from '../../ui/format.js';
 import AiSummary from '../../ui/AiSummary.js';
 
 export default function Dashboard() {
-  const { org, base, can } = useOrg();
+  const { org, base, can, on } = useOrg();
   const d = useApi(() => api(`/orgs/${org.id}/reports/dashboard`), [org.id]);
   const ai = useApi(() => api('/ai/status'), []);
   return (
@@ -49,7 +49,7 @@ export default function Dashboard() {
           </div>
         </>
       )}
-      {ai.data?.available && org.aiEnabled && <AiSummary orgId={org.id} />}
+      {on('ai') && ai.data?.available && org.aiEnabled && <AiSummary orgId={org.id} />}
       {ai.data?.available && !org.aiEnabled && can('org.update') && (
         <p className="muted no-print" style={{ marginTop: 14, fontSize: 13 }}>AI shop summaries are available on this server. Turn them on in Settings.</p>
       )}

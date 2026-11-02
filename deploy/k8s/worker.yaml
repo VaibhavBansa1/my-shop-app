@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myshop-worker
+  labels: { app: myshop, component: worker }
+spec:
+  replicas: 1          # safe to scale: jobs are locked (BullMQ / SKIP LOCKED) and schedules run once
+  selector:
+    matchLabels: { app: myshop, component: worker }
+  template:
+    metadata:
+      labels: { app: myshop, component: worker }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9091"
+    spec:
+      serviceAccountName: myshop
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile: { type: RuntimeDefault }
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: worker
+          image: myshop
+          command: ["node", "scripts/worker.mjs"]
+          ports: [{ name: metrics, containerPort: 9091 }]
+          envFrom:
+            - configMapRef: { name: myshop-config }
+            - secretRef: { name: myshop-secrets }
+          env:
+            - { name: DATABASE_OWNER_URL, value: "" }
+          livenessProbe:
+            httpGet: { path: /healthz, port: metrics }
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          resources:
+            requests: { cpu: 100m, memory: 192Mi }
+            limits: { memory: 512Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts: [{ name: tmp, mountPath: /tmp }]
+      volumes: [{ name: tmp, emptyDir: { sizeLimit: 64Mi } }]

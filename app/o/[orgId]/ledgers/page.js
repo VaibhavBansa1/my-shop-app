@@ -10,7 +10,7 @@ import { STATE_LIST } from '../../../ui/states.js';
 const FILTERS = [['', 'All'], ['sundry_debtors', 'Customers'], ['sundry_creditors', 'Suppliers'], ['current_assets', 'Cash & bank'], ['indirect_expenses', 'Expenses']];
 
 export default function Ledgers() {
-  const { org, base, can } = useOrg();
+  const { org, base, can, on } = useOrg();
   const [filter, setFilter] = useState('');
   const [q, setQ] = useState('');
   const list = useApi(() => api(`/orgs/${org.id}/ledgers`, { query: { group: filter, q } }), [org.id, filter, q]);
@@ -42,7 +42,7 @@ export default function Ledgers() {
     <>
       <PageHead title="Parties & ledgers" sub="Customers, suppliers, cash, bank, income and expense accounts"
         actions={<>
-          {can('masters.write') && <Link className="btn" href={`${base}/import?kind=parties`}>Import CSV</Link>}
+          {can('masters.write') && on('import') && <Link className="btn" href={`${base}/import?kind=parties`}>Import CSV</Link>}
           {can('party.create') && <button className="btn btn-primary" onClick={() => setOpen(!open)}>+ New ledger</button>}</>} />
       {open && (
         <form className="card grid" onSubmit={create}>

@@ -36,6 +36,10 @@
 | AI data exposure | Off by default (server + per business); facts only; names hidden from cloud models by default; no narrations/contacts; audit entry per request | `lib/services/aiSummary.js`, ADR-0008 |
 | AI prompt injection | Model has no tools and no data access; facts wrapped and declared as data; output rendered as plain text | `lib/services/aiSummary.js` |
 | SSRF via AI | AI base URL comes only from server env, https required for non-local hosts, redirects refused | `lib/ai/index.js` |
+| Undetected attacks | Security event log (sign-ins, failures, throttling, denials, rate limits, password/session/role changes, exports); per-user view + device sign-out; metrics for alerting | `lib/services/securityLog.js`, OPERATIONS.md |
+| Risky feature in production | Feature flags with kill switch (`FLAG_X=off`) and gradual rollout | `lib/flags.js` |
+| Container breakout / lateral movement | Non-root image, read-only root FS, all capabilities dropped, seccomp, no k8s API token, NetworkPolicies, web pods without migration credentials | `Dockerfile`, `deploy/k8s` |
+| Queued secrets | Job payloads encrypted in Postgres and wiped after success | `lib/queue.js` |
 | Stolen database / backup | Contact details (phone, email, address) encrypted with AES-256-GCM (`DATA_ENCRYPTION_KEY`); passwords and tokens hashed; see DATA_PROTECTION.md | `lib/crypto.js` |
 | Import abuse | 5000 rows / 4 MB max, every row validated like a form, one transaction, audited | `lib/services/importData.js` |
 | Leaking details to unauthorised users | Voucher creation checks permission before validating the body | `app/api/v1/orgs/[orgId]/vouchers/route.js` |

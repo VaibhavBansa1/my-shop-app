@@ -23,7 +23,7 @@ export default function Home() {
           {s.can('voucher.create.receipt') && <Button kind="secondary" title="+ Receipt" onPress={() => router.push({ pathname: '/entry', params: { type: 'receipt' } })} style={{ flex: 1 }} />}
           {s.can('voucher.create.payment') && <Button kind="secondary" title="+ Expense" onPress={() => router.push({ pathname: '/entry', params: { type: 'payment' } })} style={{ flex: 1 }} />}
         </View>
-        {s.can('voucher.create.purchase') && <Button kind="secondary" title="📷 Scan a purchase invoice" onPress={() => router.push('/scan')} style={{ marginBottom: 12 }} />}
+        {s.can('voucher.create.purchase') && s.on('ocr') && <Button kind="secondary" title="📷 Scan a purchase invoice" onPress={() => router.push('/scan')} style={{ marginBottom: 12 }} />}
         <ErrorNote error={d.error} />
         {!d.data ? (d.loading ? <Loading /> : null) : (
           <>

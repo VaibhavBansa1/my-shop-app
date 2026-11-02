@@ -49,6 +49,14 @@
 - ✅ Email confirmation, password reset, activity log, role permissions.
 - ❌ Two-factor sign-in.
 
+## Operations
+- ✅ Structured logs, request ids, Prometheus metrics, health/readiness checks.
+- ✅ Feature flags (kill switch, % rollout, per-business allow/deny) with CLI.
+- ✅ Security event log + "your devices" with sign-out; activity log per business.
+- ✅ Optional Redis (rate limits, caches, queue); background worker with daily schedules.
+- ✅ Report cache that is never stale.
+- ✅ Docker image + full compose stack; Kubernetes manifests (HPA, PDB, probes, NetworkPolicy, hardened pods).
+
 ## Phone app (Android)
 - ✅ Sell, receipts, expenses, vouchers + PDF share, stock (add items), customers, reports, scanning,
   AI summary, notifications, payment reminders.

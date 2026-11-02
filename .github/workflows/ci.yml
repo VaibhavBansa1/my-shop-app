@@ -15,8 +15,14 @@ jobs:
         ports: ['5432:5432']
         options: >-
           --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       PGPASSWORD: postgres
+      TEST_REDIS_URL: redis://localhost:6379/15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -49,3 +55,22 @@ jobs:
       - run: npx expo-doctor
       - name: Bundle Android JavaScript (catches import/syntax errors)
         run: npx expo export --platform android --output-dir /tmp/mobile-dist
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build -t myshop:ci .
+      - name: Image runs as non-root
+        run: test "$(docker run --rm myshop:ci id -u)" = "10001"
+
+  kubernetes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate manifests against Kubernetes schemas
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz kubeconform
+          kubectl kustomize deploy/k8s > /tmp/all.yaml
+          ./kubeconform -strict -summary /tmp/all.yaml

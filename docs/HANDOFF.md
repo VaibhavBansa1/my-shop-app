@@ -23,6 +23,9 @@ This file lets anyone (you on your PC, or a new Claude session) continue the wor
 - CSV import (items, customers/suppliers) with preview and all-or-nothing save; stock adjustments and
   physical stock count (migrations 013/014); contact details encrypted with AES-256-GCM (migration 012,
   `DATA_ENCRYPTION_KEY` required in production); one-firm auto-open and multi-firm overview.
+- Operations (docs/OPERATIONS.md): JSON logs + request ids, Prometheus metrics, health/readiness,
+  feature flags (`npm run flags`), security event log + device sign-out, optional Redis, BullMQ/Postgres
+  job queue + worker (`npm run worker`), report cache, Dockerfile + compose stack, Kubernetes manifests.
 - Password reset by email (Resend via env, dev logs the link); `npm run db:cleanup` for a daily cron.
 - Tests: `npm test` (65, incl. encryption, import, stock adjustments, notifications and reminders, role x endpoint matrix, OCR on a real image, AI with a fake model server, real SMTP delivery), `npm run smoke` (27 HTTP checks incl. the mobile flow).
 
@@ -60,4 +63,6 @@ To keep going with Claude Code locally: *"Read docs/HANDOFF.md and continue with
 - `zod` 4: use `patchOf()` from `lib/validation.js` for PATCH schemas (`.partial()` keeps defaults).
 - `shared/` must stay pure JS (runs in Node and Hermes).
 - In `mobile/`, install packages with `npx expo install`, not plain npm.
-- After the cloud container restarts, Postgres must be started again (`service postgresql start`).
+- After the cloud container restarts, Postgres must be started again (`service postgresql start`), and Redis
+  (`redis-server --daemonize yes`) and Docker (`dockerd &`) if you use them.
+- `next.config.mjs` uses `output: 'standalone'` for Docker; `npm start` still works locally.

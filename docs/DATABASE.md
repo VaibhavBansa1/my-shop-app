@@ -105,3 +105,7 @@ users ──< memberships >── organizations ──< invitations
 | 012_encrypted_contact_fields | contact fields hold ciphertext (`enc:v1:…`); limits moved to the API |
 | 013_stock_adjustment_type | new voucher type `stock_adjustment` |
 | 014_stock_adjustment_rules | balance trigger: adjustments have item lines and no ledger entries |
+| 015_ops_security_flags_jobs | `security_events` (RLS: own rows), `feature_flags`, `jobs` queue, `organizations.data_version` + bump triggers |
+| 016_scheduled_runs | once-per-day guard for scheduled jobs |
+| 017_purge_security_events | retention purge function (app cannot delete security events) |
+| 018_deferred_version_bump | version bump at commit to avoid lock contention |

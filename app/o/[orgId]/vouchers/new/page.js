@@ -22,7 +22,7 @@ function previewLine(l, item, gstOn, inter) {
 }
 
 function VoucherForm() {
-  const { org, base, can } = useOrg();
+  const { org, base, can, on } = useOrg();
   const router = useRouter();
   const sp = useSearchParams();
   const allowed = Object.keys(VOUCHER_TYPES).filter((t) => can(`voucher.create.${t}`));
@@ -124,7 +124,7 @@ function VoucherForm() {
         {allowed.map((t) => <Link key={t} className={`chip ${t === type ? 'active' : ''}`} href={`${base}/vouchers/new?type=${t}`} replace>{VOUCHER_TYPES[t]}</Link>)}
       </div>
       <ErrorNote error={masters.error || error} />
-      {type === 'purchase' && can('voucher.create.purchase') && (
+      {type === 'purchase' && can('voucher.create.purchase') && on('ocr') && (
         <ScanInvoice orgId={org.id} units={masters.data?.units ?? []} items={masters.data?.items ?? []} ledgers={ledgers}
           onApply={(d) => {
             setHead({ ...head, partyLedgerId: d.partyLedgerId, reference: d.reference, narration: d.narration, date: d.date || head.date });

@@ -22,7 +22,7 @@ function Sections({ list, base }) {
   ));
 }
 
-function Body({ id, d, base }) {
+function Body({ id, d, base, remind = true }) {
   if (id === 'profit-loss') {
     const dir = d.sections.filter((s) => s.gross); const ind = d.sections.filter((s) => !s.gross);
     return (
@@ -78,14 +78,14 @@ function Body({ id, d, base }) {
   if (id.startsWith('outstanding')) return (
     <table><thead><tr><th>Party</th><th className="num">{d.kind === 'payable' ? 'You owe' : 'Owes you'}</th>{d.kind !== 'payable' && <th className="no-print"></th>}</tr></thead>
       <tbody>{d.parties.map((p) => <tr key={p.ledgerId}><td><Link href={`${base}/ledgers/${p.ledgerId}`}>{p.ledger}</Link></td><td className="num">{amount(p.amount)}</td>
-        {d.kind !== 'payable' && <td className="num no-print">{p.amount > 0 && <Link className="btn btn-sm" href={`${base}/remind/${p.ledgerId}`}>Remind</Link>}</td>}</tr>)}</tbody>
+        {d.kind !== 'payable' && <td className="num no-print">{remind && p.amount > 0 && <Link className="btn btn-sm" href={`${base}/remind/${p.ledgerId}`}>Remind</Link>}</td>}</tr>)}</tbody>
       <tfoot><tr><td>Total</td><td className="num">{money(d.total)}</td>{d.kind !== 'payable' && <td />}</tr></tfoot></table>
   );
   return null;
 }
 
 export default function Reports() {
-  const { org, base } = useOrg();
+  const { org, base, on } = useOrg();
   const [id, setId] = useState('profit-loss');
   const [from, setFrom] = useState(monthStart());
   const [to, setTo] = useState(today());
@@ -106,7 +106,7 @@ export default function Reports() {
       </div>
       <div className="card">
         <ErrorNote error={data.error} />
-        {!current ? (!data.error && <Loading />) : <div className="table-wrap"><Body id={id} d={current} base={base} /></div>}
+        {!current ? (!data.error && <Loading />) : <div className="table-wrap"><Body id={id} d={current} base={base} remind={on('reminders')} /></div>}
       </div>
     </>
   );

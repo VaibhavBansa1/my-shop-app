@@ -17,6 +17,8 @@ export default function Settings() {
   const [confirmName, setConfirmName] = useState('');
   const ai = useApi(() => api('/ai/status'), []);
   const notify = useApi(() => api(`/orgs/${org.id}/notification-settings`), [org.id]);
+  const sessions = useApi(() => api('/me/sessions'), []);
+  const secEvents = useApi(() => api('/me/security-events'), []);
   const audit = useApi(() => (can('audit.read') ? api(`/orgs/${org.id}/audit`, { query: { limit: 50 } }) : Promise.resolve(null)), [org.id]);
   const set = (k) => (e) => {
     const v = e.target.value;
@@ -69,7 +71,7 @@ export default function Settings() {
         <h2>AI assistant (optional)</h2>
         {!ai.data?.available ? (
           <p className="muted">AI is not set up on this server. The person who runs the server can connect Ollama or LM Studio on their own
-            computer, or a cloud service (OpenRouter, Grok, OpenAI). See docs/AI.md.</p>
+            computer, or a cloud service (Groq, OpenRouter, Grok, OpenAI). See docs/AI.md.</p>
         ) : (<>
           <p>This server uses <b>{ai.data.provider}</b> ({ai.data.model}){ai.data.local ? ', running on your own computer/network — your data stays with you.' : ', a cloud service.'}</p>
           {!ai.data.local && <p className="note note-warn">Summaries send your shop's figures to {ai.data.provider}.
@@ -92,6 +94,24 @@ export default function Settings() {
         <div className="row"><button className="btn">Change password</button>
           <span className="spacer" /><button type="button" className="btn btn-danger" onClick={async () => { await api('/auth/logout', { method: 'POST' }); window.location.href = '/'; }}>Sign out</button></div>
       </form>
+
+      <div className="card grid" id="security">
+        <h2>Security — your devices and sign-ins</h2>
+        <p className="muted">Places where you are signed in. If you don't recognise one, sign it out and change your password.</p>
+        <div className="table-wrap"><table><tbody>{sessions.data?.sessions.map((x) => (
+          <tr key={x.id}><td>{(x.device || 'Unknown device').slice(0, 80)}{x.current && <> <span className="badge">this device</span></>}
+            <div className="muted" style={{ fontSize: 12 }}>{x.ip && x.ip !== 'unknown' ? `${x.ip} · ` : ''}last active {new Date(x.lastSeenAt).toLocaleString('en-IN')}</div></td>
+            <td className="num">{!x.current && <button className="btn btn-sm" onClick={() => run(async () => { await api(`/me/sessions/${x.id}`, { method: 'DELETE' }); sessions.reload(); }, 'Device signed out.')}>Sign out</button>}</td></tr>
+        ))}</tbody></table></div>
+        {sessions.data?.sessions.length > 1 && <div className="row"><button className="btn btn-sm btn-danger"
+          onClick={() => run(async () => { await api('/me/sessions', { method: 'DELETE' }); sessions.reload(); }, 'Signed out of all other devices.')}>Sign out all other devices</button></div>}
+        <details><summary className="muted">Recent sign-in activity</summary>
+          <div className="table-wrap"><table><tbody>{secEvents.data?.events.map((e, i) => (
+            <tr key={i}><td className="muted" style={{ whiteSpace: 'nowrap' }}>{new Date(e.at).toLocaleString('en-IN')}</td>
+              <td>{EVENT_LABEL[e.event] ?? e.event}</td><td className="muted" style={{ fontSize: 13 }}>{e.ip && e.ip !== 'unknown' ? e.ip : ''}</td></tr>
+          ))}</tbody></table></div>
+        </details>
+      </div>
 
       {audit.data && (
         <div className="card"><h2>Activity log</h2><div className="table-wrap"><table><tbody>{audit.data.entries.map((a) => (
@@ -119,3 +139,12 @@ export default function Settings() {
     </>
   );
 }
+
+const EVENT_LABEL = {
+  'login.success': 'Signed in', 'login.failure': 'Wrong password tried', 'login.throttled': 'Sign-in blocked (too many tries)',
+  signup: 'Account created', logout: 'Signed out', 'password.changed': 'Password changed', 'password.reset_requested': 'Password reset asked',
+  'password.reset_done': 'Password reset', 'email.verified': 'Email confirmed', 'session.revoked': 'A device was signed out',
+  'sessions.revoked_all': 'All other devices signed out', 'access.denied': 'Blocked: no permission', 'rate.limited': 'Slowed down (too many requests)',
+  'auth.rejected': 'Expired or invalid sign-in', 'export.downloaded': 'Backup downloaded', 'member.role_changed': 'Changed a member\'s role',
+  'member.removed': 'Removed a member', 'org.deleted': 'Deleted a business',
+};

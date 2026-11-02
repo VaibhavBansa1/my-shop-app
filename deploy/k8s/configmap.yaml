@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myshop-config
+data:
+  NODE_ENV: production
+  APP_ORIGIN: https://shop.example.in
+  APP_NAME: My Shop
+  TRUST_PROXY: "1"
+  EMAIL_VIA_QUEUE: "1"
+  EMAIL_VERIFICATION: required
+  LOG_LEVEL: info
+  SCHEDULE_TZ: Asia/Kolkata
+  DB_POOL_MAX: "10"

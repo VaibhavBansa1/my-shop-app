@@ -22,6 +22,7 @@ export function SessionProvider({ children }) {
       const saved = await SecureStore.getItemAsync(ORG_KEY);
       const pick = me.orgs.find((o) => o.id === saved) ?? (me.orgs.length === 1 ? me.orgs[0] : null);
       const org = pick ? await loadOrg(pick.id) : null;
+      if (org) org.flags = await api.get(`/orgs/${org.id}/flags`).catch(() => ({}));
       setState({ ready: true, user: me.user, orgs: me.orgs, org, verification: me.verification ?? 'off' });
     } catch {
       setState({ ready: true, user: null, orgs: [], org: null });
@@ -37,9 +38,11 @@ export function SessionProvider({ children }) {
     ...state,
     refresh,
     can: (action) => Boolean(state.org?.permissions?.includes(action)),
+    on: (flag) => state.org?.flags?.[flag] !== false,
     async selectOrg(orgId) {
       await SecureStore.setItemAsync(ORG_KEY, orgId);
       const org = await loadOrg(orgId);
+      if (org) org.flags = await api.get(`/orgs/${orgId}/flags`).catch(() => ({}));
       setState((s) => ({ ...s, org }));
       return org;
     },

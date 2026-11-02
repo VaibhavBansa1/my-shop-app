@@ -18,7 +18,7 @@ export default function LedgerScreen() {
         ListHeaderComponent={<View><ErrorNote error={st.error} />{st.data && (
           <Card><T muted>Opening {drcr(st.data.opening)}</T><T h2>Balance {drcr(st.data.closing)}</T>
             <T muted small>{st.data.closing > 0 ? 'They owe you (Dr)' : st.data.closing < 0 ? 'You owe them (Cr)' : 'Settled'}</T>
-            {st.data.closing > 0 && s.can('reminders.send') && <Button small title="Send payment reminder" onPress={() => router.push(`/remind/${id}`)} style={{ marginTop: 10 }} />}
+            {st.data.closing > 0 && s.can('reminders.send') && s.on('reminders') && <Button small title="Send payment reminder" onPress={() => router.push(`/remind/${id}`)} style={{ marginTop: 10 }} />}
           </Card>)}</View>}
         ListEmptyComponent={st.loading ? <Loading /> : <T muted style={{ textAlign: 'center', padding: 20 }}>No entries.</T>}
         renderItem={({ item: l }) => (

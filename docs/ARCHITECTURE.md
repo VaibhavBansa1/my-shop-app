@@ -203,6 +203,11 @@ with proper status codes (400, 401, 403, 404, 409, 422, 429, 500).
 
 ### 3.6 Caching, queues, background work
 
+**Now built** (see OPERATIONS.md): report cache keyed by a per-business data version, optional Redis,
+BullMQ/Postgres job queue with a worker, feature flags, security log, Prometheus metrics. The text below
+was the original plan.
+
+
 None at first. Reports are SQL aggregates over indexed tables and are fast at the
 expected size. Things we would add later, in this order:
 

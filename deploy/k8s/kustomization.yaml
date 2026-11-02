@@ -1,0 +1,19 @@
+# kubectl apply -k deploy/k8s     (edit configmap.yaml, create the secret first — see README.md)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: myshop
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - serviceaccount.yaml
+  - migrate-job.yaml
+  - web.yaml
+  - worker.yaml
+  - hpa.yaml
+  - pdb.yaml
+  - networkpolicy.yaml
+  - ingress.yaml
+images:
+  - name: myshop
+    newName: ghcr.io/your-org/myshop   # your registry
+    newTag: "0.3.0"

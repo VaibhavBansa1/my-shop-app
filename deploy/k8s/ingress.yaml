@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myshop
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt   # TLS via cert-manager
+    nginx.ingress.kubernetes.io/proxy-body-size: 10m   # invoice photos (app limit is 8 MB)
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"   # OCR / AI summaries
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [shop.example.in]
+      secretName: myshop-tls
+  rules:
+    - host: shop.example.in
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: myshop-web, port: { name: http } } }
+          # /api/metrics is protected by METRICS_TOKEN; you may also block it here and scrape in-cluster.

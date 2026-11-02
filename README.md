@@ -88,10 +88,14 @@ See [docs/MOBILE.md](docs/MOBILE.md). In short: `cd mobile && npm install && npx
 - [docs/AI.md](docs/AI.md) — connecting Ollama / LM Studio / Groq / OpenRouter
 - [docs/EMAIL.md](docs/EMAIL.md) — email providers and account verification
 - [docs/NOTIFICATIONS.md](docs/NOTIFICATIONS.md) — alerts, daily summary, payment reminders
+- [docs/OPERATIONS.md](docs/OPERATIONS.md) — telemetry, feature flags, security log, Redis, worker, Docker, Kubernetes
 - [docs/MANUAL_TESTING.md](docs/MANUAL_TESTING.md) — checklist for manual testing and owner decisions
 - [docs/HANDOFF.md](docs/HANDOFF.md) — current status and what to build next
 
 ## Deploying
+Docker: `docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build` (see docs/OPERATIONS.md).
+Kubernetes: `deploy/k8s` (see its README).
+
 Any Node host plus managed Postgres. Set `DATABASE_URL` (shop_app role), `DATABASE_OWNER_URL`
 (for migrations only), `APP_ORIGIN=https://your-domain`, `NODE_ENV=production`, and `TRUST_PROXY=1`
 if behind a proxy/load balancer. **Set `DATA_ENCRYPTION_KEY`** (keep a copy safe). Configure email (docs/EMAIL.md) and optionally AI (docs/AI.md);

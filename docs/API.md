@@ -63,7 +63,15 @@ Dates are `YYYY-MM-DD`.
 | POST | `/orgs/{org}/ocr/invoice` | accountant | body = photo bytes, `Content-Type: image/jpeg` or `image/png`, ≤ 8 MB; returns a purchase draft. 60/hour per user |
 | POST | `/orgs/{org}/ai/summary` | viewer | `{period: today|week|month|fy, language: en|hi|hinglish, question?}` → `{summary, provider, model, local, namesShared}`; business must have AI on; 30/hour |
 | POST | `/orgs/{org}/ocr/parse` | accountant | `{text}` (≤ 50,000 chars) from on-device OCR; returns a purchase draft. 300/hour per user |
-| GET | `/api/health` | — | DB health check |
+| GET | `/api/health` | — | liveness (database) |
+| GET | `/api/ready` | — | readiness (database, migrations, Redis) |
+| GET | `/api/metrics` | `Bearer METRICS_TOKEN` | Prometheus metrics (404 when disabled) |
+| GET | `/me/sessions` | signed in | your signed-in devices; DELETE signs out all others |
+| DELETE | `/me/sessions/{id}` | signed in | sign out one device |
+| GET | `/me/security-events` | signed in | your sign-in and security history |
+| GET | `/orgs/{org}/flags` | viewer | which optional features are on for this business |
+
+Every response carries `x-request-id`. Features switched off by a flag answer **404**.
 
 ### Creating vouchers
 
