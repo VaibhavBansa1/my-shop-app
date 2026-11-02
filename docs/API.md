@@ -38,6 +38,7 @@ Dates are `YYYY-MM-DD`.
 | DELETE | `/me` | signed in | `{password, code?, confirm:"DELETE"}` delete your account (refused with `sole_owner` while you are the only owner of a business; personal details wiped, bills keep "Deleted user") |
 | POST | `/me/email` | signed in | `{newEmail, password, code?}` emails a confirmation link to the new address and a notice to the old one |
 | POST | `/auth/email-change/confirm` | public | `{token}` from the link: switches the email, signs out every device, tells the old address |
+| GET | `/orgs/{org}/e-invoice` | accountant+ | `?voucherId=` → `{voucher, json, problems}`; `?from=&to=` → `{ready:[…], needsFix:[…]}`; `&download=1` gives the file. GST e-invoice JSON schema 1.1 (B2B sales and credit notes) for upload on the Invoice Registration Portal |
 | GET/POST | `/me/two-factor` | signed in | Two-step login: status; `{action:'setup',password}` → `{secret, uri}`; `{action:'enable',code}` → `{recoveryCodes}`; `{action:'recovery-codes',password,code}`; `{action:'disable',password,code}` |
 | POST | `/invitations/accept` | signed in | `{token, preview: true}` shows the invitation; `{token}` joins (needs a confirmed email unless verification is off). The token is never put in a URL. |
 | GET/POST | `/orgs` | signed in | list / create (you become owner; chart of accounts is seeded) |

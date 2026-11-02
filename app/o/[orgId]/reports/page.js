@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { api } from '../../../ui/api.js';
 import { useApi, Loading, ErrorNote, PageHead } from '../../../ui/components.js';
 import { useOrg } from '../../../ui/OrgContext.js';
+import { EInvoicePeriod } from '../../../ui/EInvoice.js';
 import { money, amount, qty, date, today, monthStart, VOUCHER_TYPES } from '../../../ui/format.js';
 import { downloadCsv, reportRows } from '../../../ui/download.js';
 
@@ -85,7 +86,7 @@ function Body({ id, d, base, remind = true }) {
 }
 
 export default function Reports() {
-  const { org, base, on } = useOrg();
+  const { org, base, on, can } = useOrg();
   const [id, setId] = useState('profit-loss');
   const [from, setFrom] = useState(monthStart());
   const [to, setTo] = useState(today());
@@ -108,6 +109,7 @@ export default function Reports() {
         <ErrorNote error={data.error} />
         {!current ? (!data.error && <Loading />) : <div className="table-wrap"><Body id={id} d={current} base={base} remind={on('reminders')} /></div>}
       </div>
+      {id === 'gst-summary' && org.gstin && can('voucher.create.purchase') && <EInvoicePeriod orgId={org.id} base={base} from={from} to={to} />}
     </>
   );
 }

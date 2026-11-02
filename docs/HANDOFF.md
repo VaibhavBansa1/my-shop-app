@@ -58,8 +58,9 @@ To keep going with Claude Code locally: *"Read docs/HANDOFF.md and continue with
 2. Configure real email (docs/EMAIL.md) and test AI with your Ollama (docs/AI.md).
 4. Mobile: edit stock items, date picker, offline queue for sales, CSV share.
 5. Tally XML export; importing data from Tally/Excel (CSV and JSON backup exports are done).
-6. GST e-invoice (IRN/QR) and e-way bill.
-7. TOTP two-factor for owners/admins; list of signed-in devices.
+6. Done: e-invoice JSON (schema 1.1) per bill and per period. Next: live IRP/GSP connection for IRN + signed QR
+   (needs the business's GSP credentials), e-way bill.
+7. Done: two-step login + recovery codes, account settings (name, email change, delete), devices on the phone.
 8. Optional cloud OCR for low-confidence scans (needs owner consent + data agreement).
 
 ## Gotchas

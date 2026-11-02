@@ -1,6 +1,8 @@
 // Short, bounded load run against a LOCAL server: N parallel clients for S seconds doing a realistic mix
 // (sales bills, reports, lists), then one 5000-row import. Checks for 5xx errors and reports latency.
 // Usage: node scripts/security/burst.mjs [clients=20] [seconds=20]
+// One user sends ~100 requests/s here, far above API_RATE_PER_MIN (600/min): start the server with API_RATE_PER_MIN=0
+// for this test, or most requests are (correctly) answered 429.
 const BASE = process.env.BASE || 'http://localhost:3000';
 const CLIENTS = Math.min(100, Number(process.argv[2] || 20));
 const SECONDS = Math.min(120, Number(process.argv[3] || 20));   // hard cap: this is a smoke-level burst, not a soak
