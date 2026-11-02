@@ -1,0 +1,47 @@
+// Item photo + logo upload, thumbnails, invoice logo, caching headers (web).
+const { chromium } = require('playwright');
+const path = require('path');
+const BASE = process.env.BASE || 'http://localhost:3000';
+const OUT = path.join(__dirname, '..', 'docs', 'screenshots');
+const PHOTO = path.join(__dirname, '..', 'test', 'fixtures', 'photo-exif.jpg');
+const LOGO = path.join(__dirname, '..', 'test', 'fixtures', 'invoice-sample.png');
+async function pick(loc, text) { const v = await loc.evaluate((el, t) => [...el.options].find((o) => o.textContent.includes(t))?.value, text); await loc.selectOption(v); }
+(async () => {
+  const browser = await chromium.launch();
+  const page = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
+  const errors = []; page.on('pageerror', (e) => errors.push(String(e)));
+  const imgResponses = [];
+  page.on('response', (r) => { if (r.url().includes('/api/img/')) imgResponses.push({ status: r.status(), cache: r.headers()['cache-control'], type: r.headers()['content-type'] }); });
+  await page.goto(`${BASE}/signup`);
+  await page.fill('input[autocomplete=name]', 'Photo Owner'); await page.fill('input[type=email]', `img${Date.now()}@example.com`); await page.fill('input[type=password]', 'image walk password');
+  await page.click('button:has-text("Create account")'); await page.waitForURL('**/orgs**');
+  await page.click('text=+ Create a new business'); await page.fill('form input >> nth=0', 'Photo Shop'); await page.click('button:has-text("Create")');
+  await page.waitForURL(/\/o\/[0-9a-f-]+$/);
+  const base = page.url();
+  await page.goto(`${base}/settings`);
+  await page.setInputFiles('text=Upload logo >> input[type=file]', LOGO);
+  await page.waitForSelector('text=Logo saved');
+  await page.goto(`${base}/items`);
+  await page.click('text=+ New item');
+  await page.fill('form input >> nth=0', 'Red Notebook');
+  await page.fill('form input >> nth=4', '120');
+  await page.waitForFunction(() => document.querySelector('form select').value !== '');
+  await page.setInputFiles('text=Add photo >> input[type=file]', PHOTO);
+  await page.waitForSelector('text=Change photo');
+  await page.click('button:has-text("Save")');
+  await page.waitForSelector('td:has-text("Red Notebook")');
+  await page.waitForFunction(() => { const i = document.querySelector('tbody img'); return i && i.complete && i.naturalWidth === 160; });
+  await page.screenshot({ path: `${OUT}/items-with-photos.png` });
+  console.log('thumbnail loaded at 160px ✓');
+  await page.goto(`${base}/vouchers/new?type=sales`);
+  await page.waitForSelector('text=Items');
+  await pick(page.locator('.line select').first(), 'Red Notebook');
+  await page.click('button:has-text("Save")');
+  await page.waitForSelector('text=INV/');
+  await page.waitForFunction(() => { const i = document.querySelector('.card img'); return i && i.complete && i.naturalWidth > 0; });
+  await page.screenshot({ path: `${OUT}/invoice-with-logo.png` });
+  console.log('logo on invoice ✓');
+  console.log('image responses:', JSON.stringify(imgResponses.slice(0, 3)));
+  console.log('errors:', errors.length ? errors : 'none');
+  await browser.close();
+})().catch((e) => { console.error(e.message); process.exit(1); });

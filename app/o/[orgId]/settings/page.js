@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { api } from '../../../ui/api.js';
+import { api, apiUpload, shrinkImage } from '../../../ui/api.js';
 import { useApi, ErrorNote, PageHead, Field } from '../../../ui/components.js';
 import { useOrg } from '../../../ui/OrgContext.js';
 import { date } from '../../../ui/format.js';
@@ -55,6 +55,25 @@ export default function Settings() {
           {editable && <div className="row"><button className="btn btn-primary">Save</button></div>}
         </fieldset>
       </form>
+
+      {editable && (
+        <div className="card grid">
+          <h2>Logo</h2>
+          <p className="muted">Shown on printed and shared invoices. A square or wide logo on a plain background works best.</p>
+          <div className="row">
+            {org.logo ? <img src={org.logo.medium} alt="Business logo" height={64} style={{ maxWidth: 220, objectFit: 'contain' }} /> : <span className="muted">No logo yet.</span>}
+            <label className="btn btn-sm">{org.logo ? 'Change logo' : 'Upload logo'}
+              <input type="file" accept="image/*" hidden onChange={async (e) => {
+                const f = e.target.files?.[0]; e.target.value = ''; if (!f) return;
+                await run(async () => {
+                  const r = await apiUpload(`/orgs/${org.id}/images?kind=logo`, await shrinkImage(f, 1200, 0.9));
+                  await api(`/orgs/${org.id}`, { method: 'PATCH', body: { logoImageId: r.id } }); reloadOrg();
+                }, 'Logo saved.');
+              }} /></label>
+            {org.logo && <button className="btn btn-sm" onClick={() => run(async () => { await api(`/orgs/${org.id}`, { method: 'PATCH', body: { logoImageId: null } }); reloadOrg(); }, 'Logo removed.')}>Remove</button>}
+          </div>
+        </div>
+      )}
 
       <div className="card grid" id="notifications">
         <h2>Notifications</h2>

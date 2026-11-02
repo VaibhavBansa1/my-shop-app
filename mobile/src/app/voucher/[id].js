@@ -6,6 +6,7 @@ import * as Sharing from 'expo-sharing';
 import { api } from '../../lib/api.js';
 import { useLoad, useSession } from '../../lib/session.js';
 import { invoiceHtml } from '../../lib/invoiceHtml.js';
+import { absUrl } from '../../lib/images.js';
 import { amount, date, money, qty, VOUCHER_TYPES } from '../../lib/format.js';
 import { Button, Card, ErrorNote, Field, Loading, Note, Row, Screen, T, Totals } from '../../components/ui.js';
 
@@ -21,7 +22,7 @@ export default function VoucherView() {
   async function share() {
     setBusy(true);
     try {
-      const { uri } = await Print.printToFileAsync({ html: invoiceHtml(s.org, v.data) });
+      const { uri } = await Print.printToFileAsync({ html: invoiceHtml(s.org, v.data, { logoUrl: absUrl(s.org.logo?.medium) }) });
       if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: v.data.label, UTI: 'com.adobe.pdf' });
       else await Print.printAsync({ uri });
     } catch (e) { setError(e); }

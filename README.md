@@ -25,6 +25,7 @@ Full checklist: [docs/FEATURES.md](docs/FEATURES.md). Privacy and encryption: [d
 - **Optional AI shop summaries** in English/Hindi/Hinglish with a local LLM (Ollama, LM Studio) or Groq/OpenRouter/Grok
 - Email: account confirmation, password reset, invitations (SMTP or Resend)
 - **Notifications** (cancelled bills, low stock, new members, daily summary) and **payment reminders** by WhatsApp/SMS/email with your UPI ID
+- Item photos and logos (sharp, CDN-ready); optional Kafka event stream
 - Audit log of every change; one REST API for the website and the Android app
 
 ## Run it on your computer

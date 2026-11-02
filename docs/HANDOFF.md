@@ -26,8 +26,10 @@ This file lets anyone (you on your PC, or a new Claude session) continue the wor
 - Operations (docs/OPERATIONS.md): JSON logs + request ids, Prometheus metrics, health/readiness,
   feature flags (`npm run flags`), security event log + device sign-out, optional Redis, BullMQ/Postgres
   job queue + worker (`npm run worker`), report cache, Dockerfile + compose stack, Kubernetes manifests.
+- Item photos + business logo with sharp, local/S3 storage, signed CDN-cacheable URLs (docs/OPERATIONS.md);
+  optional Kafka event stream via a transactional outbox (ADR-0009).
 - Password reset by email (Resend via env, dev logs the link); `npm run db:cleanup` for a daily cron.
-- Tests: `npm test` (65, incl. encryption, import, stock adjustments, notifications and reminders, role x endpoint matrix, OCR on a real image, AI with a fake model server, real SMTP delivery), `npm run smoke` (27 HTTP checks incl. the mobile flow).
+- Tests: `npm test` (79, incl. images, Kafka outbox (real broker test with TEST_KAFKA_BROKERS), ops/flags/queue, encryption, import, stock adjustments, notifications and reminders, role x endpoint matrix, OCR on a real image, AI with a fake model server, real SMTP delivery), `npm run smoke` (27 HTTP checks incl. the mobile flow).
 
 **Android app (`mobile/`)**
 - Expo SDK 58 app: sign in/up (+ forgot password), businesses, home, sell with exact GST preview, correct a bill, add stock items, vouchers with PDF share and

@@ -4,7 +4,7 @@ import { amount, date, money, qty, VOUCHER_TYPES } from './format.js';
 
 export const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-export function invoiceHtml(org, v) {
+export function invoiceHtml(org, v, { logoUrl = null } = {}) {
   const isInvoice = v.items.length > 0;
   const inter = v.items.some((i) => i.igst);
   const title = v.type === 'sales' && org.gstin ? 'Tax Invoice' : VOUCHER_TYPES[v.type];
@@ -17,13 +17,13 @@ export function invoiceHtml(org, v) {
     ? `<tr><th>#</th><th>Item</th><th>HSN</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Taxable</th><th class="r">GST</th><th class="r">${inter ? 'IGST' : 'CGST+SGST'}</th></tr>`
     : '<tr><th colspan="5">Ledger</th><th class="r">Debit</th><th class="r" colspan="2">Credit</th></tr>';
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'${logoUrl ? `; img-src ${esc(new URL(logoUrl).origin)}` : ''}">
 <style>body{font:13px -apple-system,Roboto,Arial,sans-serif;color:#111;margin:24px}h1{font-size:20px;margin:0}h2{font-size:16px;margin:0}
 .top{display:flex;justify-content:space-between;gap:20px}.muted{color:#555}table{width:100%;border-collapse:collapse;margin-top:14px}
 th,td{border-bottom:1px solid #ddd;padding:6px 4px;text-align:left}th{font-size:11px;text-transform:uppercase;color:#555}.r{text-align:right}
 .tot{margin-left:auto;width:260px;margin-top:10px}.tot div{display:flex;justify-content:space-between;padding:3px 0}.grand{font-weight:800;font-size:16px;border-top:1px solid #999;padding-top:6px}</style>
 </head><body>
-<div class="top"><div><h1>${esc(org.legalName || org.name)}</h1>${org.address ? `<div class="muted">${esc(org.address)}</div>` : ''}${org.gstin ? `<div class="muted">GSTIN ${esc(org.gstin)}</div>` : ''}</div>
+<div class="top"><div>${logoUrl ? `<img src="${esc(logoUrl)}" alt="" style="max-height:56px;max-width:200px;margin-bottom:6px">` : ''}<h1>${esc(org.legalName || org.name)}</h1>${org.address ? `<div class="muted">${esc(org.address)}</div>` : ''}${org.gstin ? `<div class="muted">GSTIN ${esc(org.gstin)}</div>` : ''}</div>
 <div style="text-align:right"><h2>${esc(title)}</h2><div><b>${esc(v.label)}</b></div><div class="muted">${esc(date(v.date))}</div></div></div>
 ${v.partyName ? `<p>Bill to: <b>${esc(v.partyName)}</b>${v.placeOfSupply ? ` · Place of supply ${esc(v.placeOfSupply)}` : ''}</p>` : ''}
 ${v.status === 'cancelled' ? '<p style="color:#b91c1c"><b>CANCELLED</b></p>' : ''}

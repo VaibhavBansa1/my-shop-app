@@ -23,7 +23,7 @@ const OUT = path.join(__dirname, '..', 'docs', 'screenshots');
   await a.goto(`${base}/settings`);
   await a.waitForSelector('text=Phone Browser');
   await a.click('summary:has-text("Recent sign-in activity")');
-  await a.waitForSelector('td:has-text("login.failure")');
+  await a.waitForSelector('td:has-text("Wrong password tried")');
   await a.screenshot({ path: `${OUT}/security-settings-desktop.png`, fullPage: true });
   await a.locator('tr:has-text("Phone Browser") button:has-text("Sign out")').click();
   await a.waitForSelector('text=Device signed out');

@@ -32,6 +32,15 @@ entries, items, balance trigger, audit row, all in one transaction).
   each business's queries to its own rows.
 - Thousands of small businesses fit comfortably on one Postgres server.
 
+## Re-measured after adding operations features (Nov 2026, 50 + 1 businesses, 30,000 vouchers)
+| | Before | After |
+|---|---|---|
+| Balance sheet (large business) | 411 ms | **192 ms** (P&L and balance sheet now share balances and stock valuation) |
+| Writes, 8 parallel writers in one business | 88/s (cache-version lock held for the whole save) | **123/s** (version bumped at commit) |
+Writes are below the very first measurement (218/s) because every sale now also checks low stock, raises
+alerts and bumps the cache version. 123/s ≈ 10 million vouchers a day for one business — far beyond any shop.
+Reports are additionally **cached** per business until the data changes, so repeated views cost ~1 ms.
+
 ## When to optimise (in this order)
 1. Balance sheet / P&L over many years for very large businesses → add monthly balance snapshots
    per ledger (designed in ARCHITECTURE §6).

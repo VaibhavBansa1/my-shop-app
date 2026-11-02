@@ -109,3 +109,4 @@ users ──< memberships >── organizations ──< invitations
 | 016_scheduled_runs | once-per-day guard for scheduled jobs |
 | 017_purge_security_events | retention purge function (app cannot delete security events) |
 | 018_deferred_version_bump | version bump at commit to avoid lock contention |
+| 019_images_outbox | `images` (RLS), item `image_id`, business `logo_image_id`, Kafka `outbox`, orphan-image helpers |

@@ -57,6 +57,12 @@
 - ✅ Report cache that is never stale.
 - ✅ Docker image + full compose stack; Kubernetes manifests (HPA, PDB, probes, NetworkPolicy, hardened pods).
 
+## Images and events
+- ✅ Item photos and business logo (on invoices), processed with sharp (rotate, strip GPS/EXIF, WebP sizes).
+- ✅ Fast loading: browser/phone resize before upload, signed cacheable URLs, CDN-ready, app image cache.
+- ✅ Local disk or S3-compatible storage (S3, Cloudflare R2, MinIO).
+- ✅ Optional Kafka event stream via a transactional outbox.
+
 ## Phone app (Android)
 - ✅ Sell, receipts, expenses, vouchers + PDF share, stock (add items), customers, reports, scanning,
   AI summary, notifications, payment reminders.

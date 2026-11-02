@@ -37,7 +37,8 @@
           "photosPermission": "My Shop reads a photo you choose to scan a supplier invoice.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-image"
     ],
     "extra": {
       "apiUrl": "https://YOUR-DOMAIN"

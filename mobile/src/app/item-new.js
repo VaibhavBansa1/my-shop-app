@@ -2,6 +2,10 @@
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
+import { uploadPhoto } from '../lib/images.js';
+import { absUrl } from '../lib/images.js';
 import { api } from '../lib/api.js';
 import { useLoad, useSession } from '../lib/session.js';
 import { Button, Card, Chips, ErrorNote, Field, Loading, Note, Picker, Screen } from '../components/ui.js';
@@ -14,6 +18,7 @@ export default function NewItem() {
   const [f, setF] = useState({ name: '', sku: '', unitId: null, hsnCode: '', gstRate: '5', salePrice: '', purchasePrice: '', reorderLevel: '', openingQty: '', openingRate: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [photo, setPhoto] = useState(null); // {id, urls}
   const set = (k) => (v) => setF({ ...f, [k]: v });
 
   if (!s.can('masters.write')) return <Screen><Note>Only accountants, admins and owners can add items.</Note></Screen>;
@@ -25,7 +30,7 @@ export default function NewItem() {
     const num = (v) => (v === '' ? '0' : v);
     try {
       await api.post(`/orgs/${s.org.id}/items`, { ...f, name: f.name.trim(), unitId, salePrice: num(f.salePrice), purchasePrice: num(f.purchasePrice),
-        reorderLevel: num(f.reorderLevel), openingQty: num(f.openingQty), openingRate: num(f.openingRate) });
+        reorderLevel: num(f.reorderLevel), openingQty: num(f.openingQty), openingRate: num(f.openingRate), ...(photo ? { imageId: photo.id } : {}) });
       router.back();
     } catch (e) { setError(e); setBusy(false); }
   }
@@ -51,6 +56,17 @@ export default function NewItem() {
             <Field style={{ flex: 1 }} label="Opening rate ₹" value={f.openingRate} onChangeText={set('openingRate')} keyboardType="decimal-pad" />
           </View>
           <Field label="Reorder level" hint="Show as low stock at or below this quantity" value={f.reorderLevel} onChangeText={set('reorderLevel')} keyboardType="decimal-pad" />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            {photo && <Image source={absUrl(photo.urls.thumb)} style={{ width: 64, height: 64, borderRadius: 8 }} cachePolicy="memory-disk" />}
+            <Button small kind="secondary" title={photo ? 'Change photo' : 'Add photo (optional)'} busy={busy} onPress={async () => {
+              // The system photo picker needs no permission.
+              const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1, allowsEditing: true, aspect: [1, 1], exif: false });
+              if (r.canceled || !r.assets?.[0]) return;
+              setBusy(true); setError(null);
+              try { setPhoto(await uploadPhoto(s.org.id, r.assets[0])); } catch (e) { setError(e); }
+              setBusy(false);
+            }} />
+          </View>
           <Button title="Save item" onPress={save} busy={busy} disabled={!f.name.trim() || !unitId} />
         </Card>
       </ScrollView>

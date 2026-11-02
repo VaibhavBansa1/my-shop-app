@@ -12,3 +12,8 @@ data:
   LOG_LEVEL: info
   SCHEDULE_TZ: Asia/Kolkata
   DB_POOL_MAX: "10"
+  # Several web pods cannot share a local disk: keep images in S3-compatible storage.
+  STORAGE_DRIVER: s3
+  S3_REGION: auto
+  # IMAGE_BASE_URL: https://cdn.shop.example.in   # CDN in front of the app (optional)
+  # EVENTS_ENABLED: "1"                          # with KAFKA_BROKERS in the secret

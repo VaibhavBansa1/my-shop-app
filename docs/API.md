@@ -70,6 +70,8 @@ Dates are `YYYY-MM-DD`.
 | DELETE | `/me/sessions/{id}` | signed in | sign out one device |
 | GET | `/me/security-events` | signed in | your sign-in and security history |
 | GET | `/orgs/{org}/flags` | viewer | which optional features are on for this business |
+| POST | `/orgs/{org}/images?kind=item|logo` | accountant (item) / admin (logo) | body = image bytes (`image/*`, ≤ 10 MB) → `{id, urls:{thumb, medium, large}}`; attach with `imageId` on an item or `logoImageId` on the business |
+| GET | `/api/img/{key}?e=&s=` | signed URL | image variant (WebP), `public, immutable`, ETag/304 |
 
 Every response carries `x-request-id`. Features switched off by a flag answer **404**.
 

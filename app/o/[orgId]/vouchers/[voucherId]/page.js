@@ -51,6 +51,7 @@ export default function VoucherView({ params }) {
       <div className="card">
         <div className="row" style={{ alignItems: 'flex-start' }}>
           <div>
+            {org.logo && <img src={org.logo.medium} alt="" height={56} style={{ maxWidth: 200, objectFit: 'contain', marginBottom: 6 }} />}
             <h1>{org.legalName || org.name}</h1>
             {org.address && <p className="muted" style={{ whiteSpace: 'pre-line' }}>{org.address}</p>}
             {org.gstin && <p className="muted">GSTIN {org.gstin}</p>}

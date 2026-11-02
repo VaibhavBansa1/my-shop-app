@@ -71,6 +71,33 @@ Reports and the dashboard are cached per business. The cache key includes a vers
 database increments when the business's vouchers, ledgers or items change (at commit), so cached reports
 are never stale. `REPORT_CACHE=off` disables it.
 
+## Images and CDN (item photos, logos)
+- Processing: **sharp** (libvips) — checks the file, auto-rotates, **removes all metadata (GPS location,
+  camera details)**, and saves WebP versions: thumb 160 px, medium 640 px, large 1280 px. Uploads are shrunk
+  to ≤ 1600 px in the browser/phone first, so the server does little work.
+- Storage: `STORAGE_DRIVER=local` (a volume at `/app/data/uploads`) or `s3` for AWS S3, **Cloudflare R2**
+  (no egress fees), MinIO, Backblaze B2. Use S3/R2 when you run more than one web server.
+- Fast loading: image links are signed and expire on a day boundary, so the same link is reused all day;
+  responses are `public, immutable` with ETag. Browsers keep them; a CDN keeps them for everyone.
+- **CDN setup (Cloudflare, simplest):** put your domain on Cloudflare (proxy on); add a Cache Rule
+  "URI path starts with `/api/img/` → Eligible for cache, respect origin TTL". Done — the server serves each
+  image variant roughly once per day per Cloudflare location. CloudFront/Bunny work the same way (cache
+  behaviour for `/api/img/*`, forward the query string). To serve images from a separate host, set
+  `IMAGE_BASE_URL=https://cdn.your-domain` (the CSP is extended automatically).
+- The phone app caches images in memory and on disk (`expo-image`).
+- Unused images are deleted by the daily cleanup.
+
+## Event stream (Kafka, optional)
+Business events for other systems — see [ADR-0009](adr/0009-kafka-via-outbox.md). Set `EVENTS_ENABLED=1` and
+`KAFKA_BROKERS` (managed Kafka: Confluent Cloud, Aiven, Redpanda, AWS MSK). The worker publishes from the
+outbox every second. Topic `<KAFKA_TOPIC_PREFIX or myshop>.events`, key = business id, value:
+```json
+{"eventId": 42, "type": "voucher.created", "orgId": "…", "actorId": "…", "occurredAt": "…",
+ "data": {"voucherId": "…", "type": "sales", "label": "INV/26-27/15", "total": "1071.00", "items": [ … ]}}
+```
+Event types: `voucher.created`, `voucher.cancelled`, `item.created`, `stock.low`, `import.completed`.
+Delivery is at-least-once: de-duplicate by `eventId`. Local broker: `docker compose -f docker-compose.prod.yml --profile kafka up -d`.
+
 ## Docker
 ```bash
 docker build -t myshop .

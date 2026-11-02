@@ -39,6 +39,9 @@
 | Undetected attacks | Security event log (sign-ins, failures, throttling, denials, rate limits, password/session/role changes, exports); per-user view + device sign-out; metrics for alerting | `lib/services/securityLog.js`, OPERATIONS.md |
 | Risky feature in production | Feature flags with kill switch (`FLAG_X=off`) and gradual rollout | `lib/flags.js` |
 | Container breakout / lateral movement | Non-root image, read-only root FS, all capabilities dropped, seccomp, no k8s API token, NetworkPolicies, web pods without migration credentials | `Dockerfile`, `deploy/k8s` |
+| Malicious images | sharp with a 40 MP pixel limit (decompression bombs), allowed formats only (no SVG), all metadata stripped (GPS), re-encoded to WebP; storage keys validated (no path traversal) | `lib/images.js`, `lib/storage.js` |
+| Private images via CDN | HMAC-signed, expiring URLs; content-addressed keys; images belong to one business (RLS + composite FKs) | `lib/images.js`, `019_images_outbox.sql` |
+| Event leaks | Kafka events contain ids/amounts only; outbox written in the same transaction | `lib/events.js` |
 | Queued secrets | Job payloads encrypted in Postgres and wiped after success | `lib/queue.js` |
 | Stolen database / backup | Contact details (phone, email, address) encrypted with AES-256-GCM (`DATA_ENCRYPTION_KEY`); passwords and tokens hashed; see DATA_PROTECTION.md | `lib/crypto.js` |
 | Import abuse | 5000 rows / 4 MB max, every row validated like a form, one transaction, audited | `lib/services/importData.js` |

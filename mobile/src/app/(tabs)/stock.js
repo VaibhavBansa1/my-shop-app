@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, TextInput, View } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { useCallback } from 'react';
+import { Image } from 'expo-image';
 import { api } from '../../lib/api.js';
+import { absUrl } from '../../lib/images.js';
 import { useLoad, useSession } from '../../lib/session.js';
 import { money, qty } from '../../lib/format.js';
 import { Button, Chips, ErrorNote, Loading, Row, Screen, T, useTheme } from '../../components/ui.js';
@@ -36,8 +38,15 @@ export default function Stock() {
         </View>}
         ListEmptyComponent={list.loading ? <Loading /> : <T muted style={{ textAlign: 'center', padding: 20 }}>No items.</T>}
         renderItem={({ item: i }) => (
-          <Row title={i.name} subtitle={`${money(i.salePrice)} · GST ${i.gstRate}%${i.hsnCode ? ` · HSN ${i.hsnCode}` : ''}`}
-            right={<T bold style={{ color: i.stockQty <= i.reorderLevel ? t.warn : t.ink }}>{qty(i.stockQty)} {i.unitSymbol}</T>} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            {/* expo-image caches in memory and on disk, so lists scroll fast and do not re-download */}
+            <Image source={absUrl(i.image?.thumb)} style={{ width: 44, height: 44, borderRadius: 8, backgroundColor: t.line }}
+              cachePolicy="memory-disk" recyclingKey={i.id} transition={120} accessibilityIgnoresInvertColors />
+            <View style={{ flex: 1 }}>
+              <Row title={i.name} subtitle={`${money(i.salePrice)} · GST ${i.gstRate}%${i.hsnCode ? ` · HSN ${i.hsnCode}` : ''}`}
+                right={<T bold style={{ color: i.stockQty <= i.reorderLevel ? t.warn : t.ink }}>{qty(i.stockQty)} {i.unitSymbol}</T>} />
+            </View>
+          </View>
         )}
       />
     </Screen>
