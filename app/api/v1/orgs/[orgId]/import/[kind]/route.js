@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { route, readBodyLimited } from '../../../../../../../lib/http.js';
+import { route, readBodyLimited, parseJsonStrict } from '../../../../../../../lib/http.js';
 import { importRows, MAX_IMPORT_ROWS } from '../../../../../../../lib/services/importData.js';
 import { badRequest, notFound } from '../../../../../../../lib/errors.js';
 
@@ -13,9 +13,7 @@ const body = z.object({
 export const POST = route(async ({ request, db, params }) => {
   if (!['items', 'parties'].includes(params.kind)) throw notFound('Unknown import type.');
   if (!(request.headers.get('content-type') || '').startsWith('application/json')) throw badRequest('Content-Type must be application/json.');
-  let data;
-  try { data = JSON.parse((await readBodyLimited(request, 4 * 1024 * 1024, 'The file is too large (max 4 MB).')).toString('utf8')); }
-  catch (e) { if (e.status) throw e; throw badRequest('Request body is not valid JSON.'); }
+  const data = parseJsonStrict((await readBodyLimited(request, 4 * 1024 * 1024, 'The file is too large (max 4 MB).')).toString('utf8'));
   const p = body.parse(data);
   return importRows(db, params.kind, p.rows, { dryRun: p.dryRun, skipExisting: p.skipExisting });
 }, { action: 'masters.write', flag: 'import' });

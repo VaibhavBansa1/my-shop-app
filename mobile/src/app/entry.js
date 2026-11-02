@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { ScrollView } from 'react-native';
 import { router, useLocalSearchParams, Stack } from 'expo-router';
-import { api } from '../lib/api.js';
+import { api, newIdempotencyKey } from '../lib/api.js';
 import { useLoad, useSession } from '../lib/session.js';
 import { today } from '../lib/format.js';
 import { Button, Card, ErrorNote, Field, Loading, Picker, Screen } from '../components/ui.js';
@@ -19,6 +19,8 @@ export default function Entry() {
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(today());
   const [narration, setNarration] = useState('');
+  // Same key for retries of this Save; a new key after a successful save (no duplicate bills).
+  const [idemKey, setIdemKey] = useState(newIdempotencyKey);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -44,7 +46,7 @@ export default function Entry() {
         entries: type === 'receipt'
           ? [{ ledgerId: into, debit: amount }, { ledgerId: party, credit: amount }]
           : [{ ledgerId: party, debit: amount }, { ledgerId: into, credit: amount }],
-      });
+      }, { 'idempotency-key': idemKey });
       router.replace(`/voucher/${v.id}`);
     } catch (e) { setError(e); setBusy(false); }
   }

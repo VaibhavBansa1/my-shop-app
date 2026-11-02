@@ -82,3 +82,23 @@ test('built-in ledgers cannot be deactivated or renamed', async () => {
   const u = await m.updateLedger(a.db, cash, { openingBalance: '100' });
   assert.equal(u.openingBalance, 100);
 });
+
+test('two owners demoting each other at the same moment never leaves the business without an owner', async () => {
+  const O = await import('../lib/services/orgs.js');
+  const { signup } = await import('../lib/services/accounts.js');
+  for (let round = 0; round < 5; round++) {
+    const a = await makeUserOrg();
+    const email = uniqueEmail('co');
+    const inv = await O.inviteMember(a.db, 'owner', { email, role: 'admin' });
+    const b = await signup({ name: 'Co-owner', email, password: 'co owner password' }, { ip: `co${round}` });
+    await O.acceptInvitation(b.user.id, inv.token);
+    await O.changeMemberRole(a.db, 'owner', b.user.id, 'owner');
+    const bdb = { userId: b.user.id, orgId: a.org.id };
+    await Promise.allSettled([
+      O.changeMemberRole(a.db, 'owner', b.user.id, 'admin'),
+      O.changeMemberRole(bdb, 'owner', a.user.id, 'admin'),
+    ]);
+    const { members } = await O.listMembers(a.db).catch(() => O.listMembers(bdb));
+    assert.ok(members.filter((m) => m.role === 'owner').length >= 1, `round ${round}: an owner remains`);
+  }
+});

@@ -264,3 +264,38 @@ test('stock adjustments: quantity moves, profit reflects the loss, GST untouched
     await c.query(`insert into voucher_entries (org_id, voucher_id, line_no, ledger_id, amount) values ($1, $2, 1, $3, 5), ($1, $2, 2, $4, -5)`, [db.orgId, rows[0].id, f.code('cash'), f.code('sales')]);
   }), /no ledger entries/);
 });
+
+test('idempotency: same key returns the first bill; parallel duplicates create one; different body refused', async () => {
+  const { idempotent } = await import('../lib/idempotency.js');
+  const { createVoucher } = await import('../lib/services/vouchers.js');
+  const { db } = await makeUserOrg();
+  const f = await fixtures(db);
+  const body = { ...base, type: 'sales', date: '2026-05-10', items: [{ stockItemId: f.rice.id, qty: 1, rate: 100 }] };
+  const req = (key) => new Request('http://x/', { headers: { 'idempotency-key': key } });
+  const runs = await Promise.allSettled([1, 2, 3].map(() => idempotent(req('double-tap-1'), db, body, () => createVoucher(db, body))));
+  const ok = runs.filter((r) => r.status === 'fulfilled');
+  assert.ok(ok.length >= 1);
+  assert.ok(runs.filter((r) => r.status === 'rejected').every((r) => r.reason.status === 409), 'in-flight duplicates get 409');
+  const again = await idempotent(req('double-tap-1'), db, body, () => createVoucher(db, body));
+  assert.equal(again.replayed, true);
+  assert.equal(again.data.id, ok[0].value.data.id, 'replay returns the same bill');
+  const R = await import('../lib/services/reports.js');
+  assert.equal((await R.dayBook(db, { from: '2026-05-10', to: '2026-05-10' })).vouchers.length, 1, 'exactly one bill');
+  await assert.rejects(idempotent(req('double-tap-1'), db, { ...body, narration: 'changed' }, () => createVoucher(db, body)), /different request/);
+  await assert.rejects(idempotent(req('bad key!'), db, body, () => createVoucher(db, body)), /Idempotency-Key/);
+  // A failed request frees its key for a corrected retry.
+  const bad = { ...body, items: [{ stockItemId: f.rice.id, qty: 0, rate: 1 }] };
+  await assert.rejects(idempotent(req('retry-key-1'), db, bad, () => createVoucher(db, bad)));
+  const fixed = await idempotent(req('retry-key-1'), db, bad, () => createVoucher(db, body));
+  assert.equal(fixed.replayed, false);
+});
+
+test('validation hardening: impossible dates and NUL characters are refused', async () => {
+  const { voucherSchema } = await import('../lib/validation.js');
+  const { parseJsonStrict } = await import('../lib/http.js');
+  assert.throws(() => voucherSchema.parse({ type: 'sales', date: '2026-02-30' }), /does not exist/);
+  assert.throws(() => voucherSchema.parse({ type: 'sales', date: '1800-01-01' }), /does not exist/);
+  assert.equal(voucherSchema.parse({ type: 'sales', date: '2028-02-29' }).date, '2028-02-29', 'leap day is fine');
+  assert.throws(() => parseJsonStrict('{"narration":"a\\u0000b"}'), /NUL/);
+  assert.deepEqual(parseJsonStrict('{"narration":"a\\\\u0000b"}'), { narration: 'a\\u0000b' }, 'a literal backslash-u text is fine');
+});

@@ -9,7 +9,7 @@ export class ApiError extends Error {
   }
 }
 
-export async function api(path, { method = 'GET', body, query } = {}) {
+export async function api(path, { method = 'GET', body, query, headers: extra } = {}) {
   let url = `/api/v1${path}`;
   if (query) {
     const qs = new URLSearchParams(Object.entries(query).filter(([, v]) => v !== undefined && v !== null && v !== ''));
@@ -18,7 +18,7 @@ export async function api(path, { method = 'GET', body, query } = {}) {
   const res = await fetch(url, {
     method,
     credentials: 'same-origin',
-    headers: body !== undefined ? { 'content-type': 'application/json' } : undefined,
+    headers: { ...(body !== undefined ? { 'content-type': 'application/json' } : {}), ...(extra ?? {}) },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   const data = res.status === 204 ? null : await res.json().catch(() => null);

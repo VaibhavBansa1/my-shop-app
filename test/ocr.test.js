@@ -67,3 +67,15 @@ test('draft is tenant-scoped: another org does not see this supplier', async () 
   assert.equal(d.supplierGstin, '27AAACR5055K1Z7');
   assert.equal(d.supplier, null);
 });
+
+test('OCR sheds load: beyond OCR_MAX_QUEUE waiting photos, requests get 503 + Retry-After at once', async () => {
+  const { recognize, ocrPending } = await import('../lib/services/ocr.js');
+  process.env.OCR_MAX_QUEUE = '2';
+  const results = await Promise.allSettled(Array.from({ length: 6 }, () => recognize(sample)));
+  const busy = results.filter((r) => r.status === 'rejected' && r.reason.status === 503);
+  assert.equal(busy.length, 4, '2 accepted, 4 told to retry');
+  assert.equal(busy[0].reason.retryAfter, 5);
+  assert.equal(results.filter((r) => r.status === 'fulfilled').length, 2);
+  assert.equal(ocrPending(), 0, 'counter returns to zero');
+  delete process.env.OCR_MAX_QUEUE;
+});

@@ -59,6 +59,8 @@ function VoucherForm() {
   }, [fromId, org.id, type]);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  // One key per form: a double click or a retry after a network error never creates a second bill.
+  const [idemKey] = useState(() => crypto.randomUUID());
 
   const ledgers = masters.data?.ledgers ?? [];
   const itemMap = useMemo(() => new Map((masters.data?.items ?? []).map((i) => [i.id, i])), [masters.data]);
@@ -105,7 +107,7 @@ function VoucherForm() {
       body.entries = entries.filter((x) => x.ledgerId && x.amount).map((x) => ({ ledgerId: x.ledgerId, [x.side]: x.amount }));
     }
     try {
-      const v = await api(`/orgs/${org.id}/vouchers`, { method: 'POST', body });
+      const v = await api(`/orgs/${org.id}/vouchers`, { method: 'POST', body, headers: { 'idempotency-key': idemKey } });
       router.push(`${base}/vouchers/${v.id}`);
     } catch (err) { setError(err); setBusy(false); }
   }

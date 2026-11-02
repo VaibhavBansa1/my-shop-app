@@ -22,7 +22,7 @@ export const getToken = () => SecureStore.getItemAsync(TOKEN_KEY);
 export const saveToken = (t) => SecureStore.setItemAsync(TOKEN_KEY, t, { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
 export const clearToken = () => SecureStore.deleteItemAsync(TOKEN_KEY);
 
-async function request(path, { method = 'GET', body, query, raw, contentType, timeout = TIMEOUT_MS } = {}) {
+async function request(path, { method = 'GET', body, query, raw, contentType, timeout = TIMEOUT_MS, headers: extra } = {}) {
   const base = await getServerUrl();
   if (!base) throw new ApiError(0, null, 'Set the server address first (More → Server).');
   let url = `${base}/api/v1${path}`;
@@ -34,6 +34,7 @@ async function request(path, { method = 'GET', body, query, raw, contentType, ti
   const token = await getToken();
   const headers = { accept: 'application/json' };
   if (token) headers.authorization = `Bearer ${token}`;
+  Object.assign(headers, extra ?? {});
   if (raw) headers['content-type'] = contentType;
   else if (body !== undefined) headers['content-type'] = 'application/json';
   const ctrl = new AbortController();
@@ -58,7 +59,7 @@ async function request(path, { method = 'GET', body, query, raw, contentType, ti
 
 export const api = {
   get: (path, query) => request(path, { query }),
-  post: (path, body) => request(path, { method: 'POST', body }),
+  post: (path, body, headers) => request(path, { method: 'POST', body, headers }),
   patch: (path, body) => request(path, { method: 'PATCH', body }),
   del: (path, body) => request(path, { method: 'DELETE', body }),
   upload: (path, blob, contentType = 'image/jpeg') => request(path, { method: 'POST', raw: blob, contentType, timeout: 90_000 }),
@@ -79,4 +80,9 @@ export async function signup(name, email, password) {
 export async function logout() {
   try { await request('/auth/logout', { method: 'POST' }); } catch { /* token may already be invalid */ }
   await clearToken();
+}
+
+/** Unique key for one "Save" action: retries on a flaky network reuse it, so no duplicate bills. */
+export function newIdempotencyKey() {
+  return `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}${Math.random().toString(36).slice(2, 8)}`;
 }

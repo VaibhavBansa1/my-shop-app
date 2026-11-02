@@ -4,7 +4,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { computeInvoice } from '../../../../shared/gst.js';
 import { toMilli, toPaise } from '../../../../shared/money.js';
-import { api } from '../../lib/api.js';
+import { api, newIdempotencyKey } from '../../lib/api.js';
 import { useLoad, useSession } from '../../lib/session.js';
 import { money, today } from '../../lib/format.js';
 import { Button, Card, ErrorNote, Field, Loading, Note, Picker, Screen, T, Totals, useTheme } from '../../components/ui.js';
@@ -33,6 +33,8 @@ export default function Sell() {
   }, [org.id]);
   const [party, setParty] = useState(null);
   const [lines, setLines] = useState([blankLine()]);
+  // Same key for retries of this Save; a new key after a successful save (no duplicate bills).
+  const [idemKey, setIdemKey] = useState(newIdempotencyKey);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   // Correction mode (?from=<voucherId>): prefill; saving cancels the original in the same transaction.
@@ -68,8 +70,9 @@ export default function Sell() {
       const v = await api.post(`/orgs/${org.id}/vouchers`, {
         type: 'sales', date: original?.date ?? today(), partyLedgerId: party, ...(original ? { replacesVoucherId: original.id } : {}),
         items: lines.filter((l) => l.stockItemId).map((l) => ({ stockItemId: l.stockItemId, qty: l.qty, rate: l.rate || '0', discount: l.discount || '0' })),
-      });
+      }, { 'idempotency-key': idemKey });
       setLines([blankLine()]); setParty(null); setOriginal(null); setBusy(false);
+      setIdemKey(newIdempotencyKey());
       router.setParams({ from: undefined });
       router.push(`/voucher/${v.id}`);
     } catch (e) { setError(e); setBusy(false); }

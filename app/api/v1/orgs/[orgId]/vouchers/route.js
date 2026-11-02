@@ -4,6 +4,7 @@ import { createVoucher, listVouchers } from '../../../../../../lib/services/vouc
 import { forbidden } from '../../../../../../lib/errors.js';
 import { can } from '../../../../../../lib/permissions.js';
 import { z } from 'zod';
+import { idempotent } from '../../../../../../lib/idempotency.js';
 
 const listQuery = dateRange.extend({
   type: voucherSchema.shape.type.optional(),
@@ -24,5 +25,6 @@ export const POST = route(async ({ request, db, role }) => {
   if (!can(role, `voucher.create.${type}`)) throw forbidden(`Your role cannot create ${type.replace('_', ' ')} vouchers.`);
   if (raw?.replacesVoucherId && !can(role, 'voucher.cancel')) throw forbidden('Your role cannot correct (cancel) vouchers.');
   const body = voucherSchema.parse(raw);
-  return json(await createVoucher(db, body), 201);
+  const r = await idempotent(request, db, body, () => createVoucher(db, body));
+  return json(r.data, r.status, r.replayed ? { 'idempotent-replayed': 'true' } : {});
 }, { action: 'vouchers.read' });

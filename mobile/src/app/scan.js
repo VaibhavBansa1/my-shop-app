@@ -5,7 +5,7 @@ import { Alert, Image, Linking, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { isValidGstin } from '../../../shared/gstin.js';
-import { api } from '../lib/api.js';
+import { api, newIdempotencyKey } from '../lib/api.js';
 import { deviceOcrAvailable, scanInvoice } from '../lib/ocr.js';
 import { useLoad, useSession } from '../lib/session.js';
 import { money, today } from '../lib/format.js';
@@ -23,6 +23,8 @@ export default function Scan() {
   const [draft, setDraft] = useState(null);
   const [lines, setLines] = useState([]);       // editable copy of draft items
   const [head, setHead] = useState({ date: today(), reference: '', supplierName: '' });
+  // Same key for retries of this Save; a new key after a successful save (no duplicate bills).
+  const [idemKey, setIdemKey] = useState(newIdempotencyKey);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -86,7 +88,7 @@ export default function Scan() {
       const v = await api.post(`/orgs/${org.id}/vouchers`, {
         type: 'purchase', date: head.date, partyLedgerId: draft.supplier?.ledgerId ?? null, reference: head.reference.slice(0, 80),
         narration: `Scanned invoice${head.reference ? ` ${head.reference}` : ''}`, items,
-      });
+      }, { 'idempotency-key': idemKey });
       router.replace(`/voucher/${v.id}`);
       if (draft.totals.total != null && Math.abs(v.total - draft.totals.total) > 1) {
         Alert.alert('Please check the total', `Saved total ${money(v.total)} differs from the invoice total ${money(draft.totals.total)}. If it is wrong, cancel this voucher and enter it again.`);
